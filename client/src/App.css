@@ -1,0 +1,68 @@
+.App {
+    width: 100vw;
+    height: 100vh;
+}
+
+body {
+    margin: 0;
+    padding: 0;
+}
+
+.navigation {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px;
+    background-color: #2F4050;
+}
+
+.login-registration {
+    display: flex;
+    align-items: center;
+}
+
+.login-registration a {
+    text-decoration: none;
+    color: white;
+    margin-right: 10px;
+    font-weight: bold;
+    font-size: 1em;
+}
+
+.brand {
+    display: flex;
+    align-items: center;
+}
+
+.brand a {
+    text-decoration: none;
+    color: white;
+    font-size: 1.5em;
+    font-weight: bold;
+}
+
+.user-info {
+    display: flex;
+    align-items: center;
+}
+
+.user-info-container {
+    margin-right: 20px;
+}
+
+.user-info h1 {
+    font-size: 1.5em;
+    color: white;
+}
+
+.logout-btn {
+    background-color: #ff5555;
+    color: #fff;
+    padding: 8px 16px;
+    border: none;
+    cursor: pointer;
+    font-weight: bold;
+    font-size: 1em;
+}
+
+

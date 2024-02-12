@@ -1,0 +1,69 @@
+.Sidebar {
+    height: 600px;
+    width: 300px;
+    background-color: white;
+    border: 1px solid black;
+    margin: 10px;
+  }
+  
+  .SidebarList {
+    height: auto;
+    padding: 0;
+    width: 100%;
+  }
+  
+  .SidebarList .row {
+    width: 100%;
+    height: 50px;
+    list-style-type: none;
+    margin: 0%;
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+    align-items: center;
+    position: relative;
+  }
+  
+  .Sidebar .row:hover {
+    cursor: pointer;
+    background-color: #579ad8;;
+  }
+  
+  .SidebarList .row.active {
+    background-color: grey;
+  }
+  
+  .row #icon {
+    flex: 30%;
+    display: grid;
+    place-items: center;
+  }
+  
+  .row #title {
+    flex: 70%;
+  }
+  
+  .SubmenuList {
+    list-style: none;
+    padding: 0;
+    margin-top: 5px;
+    display: flex;
+    flex-direction: column;
+    position: absolute;
+    top: 100%;
+    left: 0;
+    width: 100%;
+    background-color: white;
+  }
+  
+  .SubmenuList li {
+    display: flex;
+    align-items: center;
+    padding: 8px;
+    cursor: pointer;
+    transition: background 0.3s;
+  }
+  
+  .SubmenuList li:hover {
+    background-color: #579ad8;;
+  }
