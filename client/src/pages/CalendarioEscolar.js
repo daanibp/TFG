@@ -1,4 +1,6 @@
-import React, { useContext } from "react";
+import React, { useEffect, useState, useContext } from "react";
+import axios from "axios";
+import { useParams } from "react-router-dom";
 import Calendario from "../Components/Calendario";
 import Sidebar from "../Components/Sidebar";
 import { AuthContext } from "../helpers/AuthContext";
@@ -7,6 +9,15 @@ import { FaApple } from "react-icons/fa";
 
 function CalendarioEscolar() {
     const { authState } = useContext(AuthContext);
+    let { id } = useParams();
+    const [eventos, setEventos] = useState([]);
+
+    useEffect(() => {
+        axios.get(`http://localhost:5001/eventos/${id}`).then((response) => {
+            console.log(response);
+            setEventos(response.data);
+        });
+    }, [id]);
 
     return (
         <AuthContext.Provider value={{ authState }}>
@@ -20,7 +31,7 @@ function CalendarioEscolar() {
             ) : (
                 <div className="sidebar-calendar">
                     <div id="miSidebar">
-                        <Sidebar />
+                        <Sidebar id={authState.id} />
                     </div>
                     <div className="box">
                         <div className="boxTitleLabel">
@@ -50,7 +61,7 @@ function CalendarioEscolar() {
                                 </div>
                             </button>
                         </div>
-                        <Calendario />
+                        <Calendario eventos={eventos} />
                     </div>
                 </div>
             )}

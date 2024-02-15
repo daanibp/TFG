@@ -9,19 +9,8 @@ import "dayjs/locale/es";
 dayjs.Ls.en.weekStart = 1;
 dayjs.locale("es");
 
-function Calendario() {
+function Calendario({ eventos }) {
     const localizer = dayjsLocalizer(dayjs);
-
-    const events = [
-        {
-            start: dayjs("2024-02-14T12:00:00").toDate(),
-            end: dayjs("2024-02-14T13:00:00").toDate(),
-            title: "Evento 1",
-            data: {
-                x: 20,
-            },
-        },
-    ];
 
     const components = {
         event: (props) => {
@@ -49,7 +38,7 @@ function Calendario() {
         <div className="Calendar">
             <Calendar
                 localizer={localizer}
-                events={events}
+                events={eventos}
                 formats={{
                     dayHeaderFormat: (date) => {
                         return dayjs(date).format("dddd @ DD/MM/YYYY");

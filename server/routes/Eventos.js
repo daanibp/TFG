@@ -1,0 +1,14 @@
+const express = require("express");
+const router = express.Router();
+const { Eventos } = require("../models");
+const { validateToken } = require("../middlewares/AuthMiddleware");
+
+router.get("/:usuarioId", async (req, res) => {
+    const usuarioId = req.params.usuarioId;
+    const eventos = await Eventos.findAll({
+        where: { UsuarioId: usuarioId },
+    });
+    res.json(eventos);
+});
+
+module.exports = router;

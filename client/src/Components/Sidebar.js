@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import "../estilos/Sidebar.css";
 import { SidebarData } from "./SidebarData.js";
 
-function Sidebar() {
+function Sidebar({ id }) {
     const [activeItem, setActiveItem] = useState(null);
 
     const handleItemClick = (index) => {
@@ -16,7 +16,7 @@ function Sidebar() {
                 <hr></hr>
             </div>
             <ul className="SidebarList">
-                {SidebarData.map((val, index) => (
+                {SidebarData({ id }).map((val, index) => (
                     <li
                         key={index}
                         className={`row ${

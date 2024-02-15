@@ -2,7 +2,7 @@ import React from "react";
 import SchoolIcon from "@mui/icons-material/School";
 import CalendarMonthIcon from "@mui/icons-material/CalendarMonth";
 
-export const SidebarData = [
+export const SidebarData = ({ id }) => [
     {
         title: "Mi calendario",
         icon: <CalendarMonthIcon />,
@@ -10,7 +10,7 @@ export const SidebarData = [
             {
                 title: "Mi calendario escolar",
                 icon: <SchoolIcon />,
-                link: "/calendarioescolar",
+                link: `/calendarioescolar/${id}`,
             },
             {
                 title: "Mi calendario completo",

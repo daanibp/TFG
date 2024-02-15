@@ -16,7 +16,7 @@ function Home() {
                     </h3>
                 </div>
             ) : (
-                <Sidebar />
+                <Sidebar id={authState.id} />
             )}
         </AuthContext.Provider>
     );
