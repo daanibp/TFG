@@ -11,6 +11,10 @@ function Sidebar() {
 
     return (
         <div className="Sidebar">
+            <div className="titleAreaPersonalSideBar">Mi Área Personal</div>
+            <div>
+                <hr></hr>
+            </div>
             <ul className="SidebarList">
                 {SidebarData.map((val, index) => (
                     <li

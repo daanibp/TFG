@@ -45,7 +45,9 @@ function Registration() {
                         placeholder="Tu contraseña..."
                     />
 
-                    <button type="submit"> Registrarse </button>
+                    <button className="buttonRegistration" type="submit">
+                        Registrarse
+                    </button>
                 </Form>
             </Formik>
         </div>

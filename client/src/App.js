@@ -7,6 +7,7 @@ import Home from "./pages/Home";
 import Login from "./pages/Login";
 import Registration from "./pages/Registration";
 import PageNotFound from "./pages/PageNotFound";
+import Calendar from "./pages/CalendarioEscolar";
 
 function App() {
     const [authState, setAuthState] = useState({
@@ -84,6 +85,10 @@ function App() {
                         <Route
                             path="/registration"
                             element={<Registration />}
+                        />
+                        <Route
+                            path="/calendarioescolar"
+                            element={<Calendar />}
                         />
                         <Route path="*" element={<PageNotFound />} />
                     </Routes>

@@ -1,9 +1,16 @@
 .Sidebar {
-    height: 600px;
-    width: 300px;
+    height: 84vh;
+    width: 250px;
     background-color: white;
-    border: 1px solid black;
-    margin: 10px;
+    border: 3px solid #2F4050;
+    margin-left: 1%;
+    margin-top: 1%;
+  }
+
+  .titleAreaPersonalSideBar {
+    font-size: 40px;
+    margin: 7%;
+    text-align: center;
   }
   
   .SidebarList {

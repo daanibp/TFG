@@ -1,4 +1,4 @@
-import React, { useContext, useState } from "react";
+import React, { useContext } from "react";
 import { AuthContext } from "../helpers/AuthContext";
 import "../estilos/Home.css";
 import Sidebar from "../Components/Sidebar";
