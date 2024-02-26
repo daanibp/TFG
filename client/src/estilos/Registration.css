@@ -17,7 +17,7 @@ label {
 }
 
 input {
-    width: 100%;
+    width: 98%;
     padding: 8px;
     margin-bottom: 10px;
     border: 1px solid #ddd;
@@ -36,4 +36,19 @@ input {
 .error {
     color: red;
     margin-bottom: 10px;
+}
+
+.mensaje {
+    margin: 10px;
+    background-color: #2F4050;
+    border: 3px solid white;
+    color: white
+}
+
+.mensaje button {
+    margin: 10px;
+    background-color: #2F4050;
+    border: 3px solid white;
+    color: white;
+    cursor: pointer;
 }

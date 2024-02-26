@@ -8,6 +8,7 @@ import Login from "./pages/Login";
 import Registration from "./pages/Registration";
 import PageNotFound from "./pages/PageNotFound";
 import CalendarioEscolar from "./pages/CalendarioEscolar";
+import LoadingIndicator from "./Components/LoadingIndicator";
 
 function App() {
     const [authState, setAuthState] = useState({
@@ -15,6 +16,7 @@ function App() {
         id: 0,
         status: false,
     });
+    const [loading, setLoading] = useState(true);
 
     useEffect(() => {
         axios
@@ -36,6 +38,7 @@ function App() {
                         status: true,
                     });
                 }
+                setLoading(false);
             });
     }, [setAuthState]);
 
@@ -47,6 +50,10 @@ function App() {
             status: false,
         });
     };
+
+    if (loading) {
+        return <LoadingIndicator />;
+    }
 
     return (
         <div className="App">

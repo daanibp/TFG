@@ -1,14 +1,18 @@
-import React from "react";
+import React, { useState } from "react";
 import { Formik, Form, Field, ErrorMessage } from "formik";
 import * as Yup from "yup";
 import axios from "axios";
 import "../estilos/Registration.css";
+import { useNavigate } from "react-router-dom";
 
 function Registration() {
     const initialValues = {
         uo: "",
         password: "",
     };
+    let navigate = useNavigate();
+
+    const [registroExitoso, setRegistroExitoso] = useState(false);
 
     const validationSchema = Yup.object().shape({
         uo: Yup.string().min(3).max(15).required(),
@@ -18,6 +22,7 @@ function Registration() {
     const onSubmit = (data) => {
         axios.post("http://localhost:5001/usuarios", data).then((response) => {
             console.log(data);
+            setRegistroExitoso(true);
         });
     };
 
@@ -44,10 +49,18 @@ function Registration() {
                         name="password"
                         placeholder="Tu contraseña..."
                     />
-
                     <button className="buttonRegistration" type="submit">
                         Registrarse
                     </button>
+
+                    {registroExitoso && (
+                        <div className="mensaje">
+                            <p>Te has registrado correctamente. ¡Bienvenido!</p>
+                            <button onClick={() => navigate("/login")}>
+                                Iniciar Sesión
+                            </button>
+                        </div>
+                    )}
                 </Form>
             </Formik>
         </div>

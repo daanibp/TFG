@@ -66,4 +66,12 @@ body {
     font-size: 1em;
 }
 
+.rbc-event-content {
+    display: flex;
+    align-items: center;
+}
+.rbc-event-content svg {
+    margin-right: 5px;
+  }
+
 

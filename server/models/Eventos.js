@@ -88,6 +88,10 @@ module.exports = (sequelize, DataTypes) => {
             type: DataTypes.STRING,
             allowNull: false,
         },
+        examen: {
+            type: DataTypes.BOOLEAN,
+            allowNull: false,
+        },
     });
 
     return Eventos;

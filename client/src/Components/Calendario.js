@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import { Calendar, dayjsLocalizer } from "react-big-calendar";
 import "react-big-calendar/lib/css/react-big-calendar.css";
 import dayjs from "dayjs";
@@ -9,24 +9,28 @@ import "dayjs/locale/es";
 dayjs.Ls.en.weekStart = 1;
 dayjs.locale("es");
 
-function Calendario({ eventos }) {
+function Calendario({ e, startHour, endHour }) {
     const localizer = dayjsLocalizer(dayjs);
+
+    const [selectedEvent, setSelectedEvent] = useState(null);
+
+    const handleEventClick = (event) => {
+        setSelectedEvent(event);
+    };
+
+    const closeModal = () => {
+        setSelectedEvent(null);
+    };
+
+    const formatDate = (date) => {
+        return dayjs(date).format("dddd, D [de] MMMM [de] YYYY [a las] HH:mm");
+    };
 
     const components = {
         event: (props) => {
-            const { data } = props.event;
-            console.log(data);
-
-            if (data.x > 15) {
-                return (
-                    <div className="event" style={{ background: "red" }}>
-                        <CiCalendarDate />
-                        {props.title}
-                    </div>
-                );
-            }
+            console.log(props);
             return (
-                <div className="event">
+                <div>
                     <CiCalendarDate />
                     {props.title}
                 </div>
@@ -38,13 +42,13 @@ function Calendario({ eventos }) {
         <div className="Calendar">
             <Calendar
                 localizer={localizer}
-                events={eventos}
+                events={e}
+                components={components}
                 formats={{
                     dayHeaderFormat: (date) => {
                         return dayjs(date).format("dddd @ DD/MM/YYYY");
                     },
                 }}
-                components={components}
                 messages={{
                     next: "Siguiente",
                     previous: "Anterior",
@@ -56,7 +60,21 @@ function Calendario({ eventos }) {
                     time: "Hora",
                     event: "Evento",
                 }}
+                min={startHour}
+                max={endHour}
+                onSelectEvent={handleEventClick}
             />
+            {selectedEvent && (
+                <div className="event-info-box">
+                    <h2>{selectedEvent.title}</h2>
+                    <hr></hr>
+                    <p>{selectedEvent.descripcion}</p>
+                    <p>Fecha de inicio: {formatDate(selectedEvent.start)}</p>
+                    <p>Fecha de fin: {formatDate(selectedEvent.end)}</p>
+
+                    <button onClick={closeModal}>Cerrar</button>
+                </div>
+            )}
         </div>
     );
 }
