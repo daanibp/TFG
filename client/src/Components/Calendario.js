@@ -28,7 +28,6 @@ function Calendario({ e, startHour, endHour }) {
 
     const components = {
         event: (props) => {
-            console.log(props);
             return (
                 <div>
                     <CiCalendarDate />

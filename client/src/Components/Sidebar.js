@@ -2,12 +2,18 @@ import React, { useState } from "react";
 import "../estilos/Sidebar.css";
 import { SidebarData } from "./SidebarData.js";
 
-function Sidebar({ id }) {
+function Sidebar({ id, isAdmin }) {
+    const [expandedItem, setExpandedItem] = useState(null);
     const [activeItem, setActiveItem] = useState(null);
 
     const handleItemClick = (index) => {
-        setActiveItem(activeItem === index ? null : index);
+        setExpandedItem((prevItem) => (prevItem === index ? null : index));
+        setActiveItem((prevItem) => (prevItem === index ? null : index));
     };
+
+    const filteredSidebarData = SidebarData({ id }).filter(
+        (item) => isAdmin || item.visible === "true"
+    );
 
     return (
         <div className="Sidebar">
@@ -16,28 +22,40 @@ function Sidebar({ id }) {
                 <hr></hr>
             </div>
             <ul className="SidebarList">
-                {SidebarData({ id }).map((val, index) => (
+                {filteredSidebarData.map((val, index) => (
                     <li
                         key={index}
-                        className={`row ${
+                        className={`containerCompleto ${
                             activeItem === index ? "active" : ""
                         }`}
                         onClick={() => handleItemClick(index)}
                     >
-                        <div id="icon">{val.icon}</div>
-                        <div id="title">{val.title}</div>
-                        {val.childrens && activeItem === index && (
+                        <div className="fila">
+                            <div className="iconoText">
+                                {val.icon} {val.title}
+                            </div>
+                            {val.childrens && (
+                                <span
+                                    className={`arrow ${
+                                        expandedItem === index ? "down" : "up"
+                                    }`}
+                                ></span>
+                            )}
+                        </div>
+                        {val.childrens && expandedItem === index && (
                             <ul className="SubmenuList">
                                 {val.childrens.map((child, childIndex) => (
                                     <li
                                         key={childIndex}
+                                        className="children"
                                         onClick={() =>
                                             (window.location.pathname =
                                                 child.link)
                                         }
                                     >
-                                        <div id="icon">{child.icon}</div>
-                                        <div id="title">{child.title}</div>
+                                        <div>
+                                            {child.icon} {child.title}
+                                        </div>
                                     </li>
                                 ))}
                             </ul>

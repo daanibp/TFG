@@ -23,6 +23,7 @@ function Login() {
                     setAuthState({
                         uo: response.data.uo,
                         id: response.data.id,
+                        admin: response.data.admin,
                         status: true,
                     });
                     navigate("/");

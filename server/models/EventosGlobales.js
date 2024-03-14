@@ -1,5 +1,5 @@
 module.exports = (sequelize, DataTypes) => {
-    const Eventos = sequelize.define("Eventos", {
+    const EventosGlobales = sequelize.define("EventosGlobales", {
         asunto: {
             type: DataTypes.STRING,
             allowNull: false,
@@ -88,11 +88,7 @@ module.exports = (sequelize, DataTypes) => {
             type: DataTypes.STRING,
             allowNull: false,
         },
-        examen: {
-            type: DataTypes.BOOLEAN,
-            allowNull: false,
-        },
     });
 
-    return Eventos;
+    return EventosGlobales;
 };

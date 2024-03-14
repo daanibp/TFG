@@ -8,11 +8,14 @@
     border: 1px solid #ddd;
     border-radius: 5px;
     box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    display:block;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
 }
 
 label {
     display: block;
-    margin-bottom: 5px;
     font-weight: bold;
 }
 
@@ -20,6 +23,7 @@ input {
     width: 98%;
     padding: 8px;
     margin-bottom: 10px;
+    margin-top: 5px;
     border: 1px solid #ddd;
     border-radius: 4px;
 }
@@ -31,6 +35,10 @@ input {
     border: none;
     border-radius: 4px;
     cursor: pointer;
+}
+
+.buttonRegistration:hover{
+    background-color: #369939;
 }
 
 .error {
@@ -51,4 +59,19 @@ input {
     border: 3px solid white;
     color: white;
     cursor: pointer;
+}
+
+.CrearAdmin {
+    display: flex;
+}
+
+.Form {
+    height: 65vh;
+    width: 77vw;
+    margin-left: 2%;
+    margin-top: 1%;
+}
+
+.formContainer span{
+    color: rgb(255, 55, 55);
 }

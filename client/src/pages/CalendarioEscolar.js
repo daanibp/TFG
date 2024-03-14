@@ -4,9 +4,13 @@ import { useParams, useNavigate } from "react-router-dom";
 import dayjs from "dayjs";
 import Calendario from "../Components/Calendario";
 import Sidebar from "../Components/Sidebar";
+import AñadirEvento from "../Components/AñadirEvento";
+import EliminarEvento from "../Components/EliminarEvento";
 import { AuthContext } from "../helpers/AuthContext";
 import { FcGoogle } from "react-icons/fc";
 import { FaApple } from "react-icons/fa";
+import { IoIosAddCircle } from "react-icons/io";
+import { TiDelete } from "react-icons/ti";
 import Papa from "papaparse";
 import utc from "dayjs/plugin/utc";
 import timezone from "dayjs/plugin/timezone";
@@ -19,20 +23,44 @@ dayjs.tz.setDefault("Europe/Madrid");
 function CalendarioEscolar() {
     const { authState } = useContext(AuthContext);
     let { id } = useParams();
+
     const [eventos, setEventos] = useState([]);
     const [eventosExamenes, setEventosExamenes] = useState([]);
     const [mostrarTipoEventos, setMostrarTipoEventos] = useState("Clases");
     const [mostrarMensajeG, setMostrarMensajeG] = useState(false);
     const [mostrarMensajeA, setMostrarMensajeA] = useState(false);
+    const [mostrarFormulario, setMostrarFormulario] = useState(false);
+    const [mostrarMensajeAñadido, setMostrarMensajeAñadido] = useState(false);
+    const [borrarEvento, setBorrarEvento] = useState(false);
+
     let navigate = useNavigate();
+
+    const MessageBoxGoogle = ({ message, onConfirm, onCancel }) => {
+        return (
+            <div className="message-box">
+                <p>{message}</p>
+                <button onClick={onConfirm}>Sí</button>
+                <button onClick={onCancel}>No</button>
+            </div>
+        );
+    };
+
+    const MessageBoxApple = ({ message, onCancel }) => {
+        return (
+            <div className="message-box">
+                <p>{message}</p>
+                <button onClick={onCancel}>Vale</button>
+            </div>
+        );
+    };
 
     useEffect(() => {
         axios.get(`http://localhost:5001/eventos/${id}`).then((response) => {
-            console.log(response.data);
+            console.log("Clases: ", response.data);
             setEventos(response.data);
         });
         axios.get(`http://localhost:5001/eventos/ex/${id}`).then((response) => {
-            console.log(response.data);
+            console.log("Examenes: ", response.data);
             setEventosExamenes(response.data);
         });
     }, [id]);
@@ -73,6 +101,7 @@ function CalendarioEscolar() {
 
     eventosMostrados.forEach((evento) => {
         eventosFormateados.push({
+            id: evento.id,
             start: dayjs
                 .tz(
                     formatearFecha(
@@ -98,8 +127,8 @@ function CalendarioEscolar() {
         });
     });
 
-    console.log("Eventos", eventos);
-    console.log("EventosFormateados", eventosFormateados); // aquí se consiguen bien bien
+    //console.log("Eventos", eventos);
+    //console.log("EventosFormateados", eventosFormateados); // aquí se consiguen bien bien
 
     const mostrarOcultarMensaje = useCallback(
         (tipoMensaje) => {
@@ -108,11 +137,23 @@ function CalendarioEscolar() {
                     setMostrarMensajeG(
                         (prevMostrarMensajeG) => !prevMostrarMensajeG
                     );
+                    setMostrarMensajeA(false);
                     break;
                 case "Apple":
                     setMostrarMensajeA(
                         (prevMostrarMensajeA) => !prevMostrarMensajeA
                     );
+                    setMostrarMensajeG(false);
+                    break;
+                case "Añadir":
+                    setMostrarFormulario(
+                        (prevMostrarFormulario) => !prevMostrarFormulario
+                    );
+                    setBorrarEvento(false);
+                    break;
+                case "Borrar":
+                    setBorrarEvento((prevBorrarEvento) => !prevBorrarEvento);
+                    setMostrarFormulario(false);
                     break;
                 default:
                     break;
@@ -151,7 +192,7 @@ function CalendarioEscolar() {
         };
         data.push(temp);
     });
-    console.log("Eventos para el CSV: ", data);
+    //console.log("Eventos para el CSV: ", data);
 
     // Función para dejar el formato correcto para la creación del csv
     const formatearDatos = (data) => {
@@ -220,6 +261,40 @@ function CalendarioEscolar() {
         window.open("https://calendar.google.com/", "_blank");
     };
 
+    // Función para agregar un evento al estado
+    const agregarEvento = (nuevoEvento) => {
+        if (!nuevoEvento.examen) {
+            setEventos((prevEventos) => [...prevEventos, nuevoEvento]);
+        } else if (nuevoEvento.examen) {
+            setEventosExamenes((prevEventosExamenes) => [
+                ...prevEventosExamenes,
+                nuevoEvento,
+            ]);
+        } else {
+            return;
+        }
+        setMostrarFormulario(false);
+        // Mostrar el mensaje temporal
+        setMostrarMensajeAñadido(true);
+        // Ocultar el mensaje después de 1 segundo
+        setTimeout(() => {
+            setMostrarMensajeAñadido(false);
+        }, 1000);
+    };
+
+    // Función para eliminar un evento del estado
+    const eliminarEvento = (eventoId, tipo) => {
+        if (tipo === "Clases") {
+            setEventos((prevEventos) =>
+                prevEventos.filter((evento) => evento.id !== eventoId)
+            );
+        } else if (tipo === "Examenes") {
+            setEventosExamenes((prevEventosExamenes) =>
+                prevEventosExamenes.filter((evento) => evento.id !== eventoId)
+            );
+        }
+    };
+
     return (
         <AuthContext.Provider value={{ authState }}>
             {!authState.status ? (
@@ -234,7 +309,7 @@ function CalendarioEscolar() {
             ) : (
                 <div className="sidebar-calendar">
                     <div id="miSidebar">
-                        <Sidebar id={authState.id} />
+                        <Sidebar id={authState.id} isAdmin={authState.admin} />
                     </div>
                     <div className="box">
                         <div className="boxTitleLabel">
@@ -243,81 +318,120 @@ function CalendarioEscolar() {
                             </div>
                         </div>
                         <div className="opcionesBotones">
-                            <button
-                                id="HorarioDeClases"
-                                onClick={() => handleTipoEventosClick("Clases")}
-                                className={
-                                    mostrarTipoEventos === "Clases"
-                                        ? "boton-activo"
-                                        : ""
-                                }
-                            >
-                                <div className="txtHorCl">
-                                    Horario de Clases
+                            <div className="HorarioYCalendario">
+                                <button
+                                    id="HorarioDeClases"
+                                    onClick={() =>
+                                        handleTipoEventosClick("Clases")
+                                    }
+                                    className={
+                                        mostrarTipoEventos === "Clases"
+                                            ? "boton-activo"
+                                            : ""
+                                    }
+                                >
+                                    <div className="txtHorCl">
+                                        Horario de Clases
+                                    </div>
+                                </button>
+                                <button
+                                    id="HorarioDeExamenes"
+                                    onClick={() =>
+                                        handleTipoEventosClick("Examenes")
+                                    }
+                                    className={
+                                        mostrarTipoEventos === "Examenes"
+                                            ? "boton-activo"
+                                            : ""
+                                    }
+                                >
+                                    <div className="txtHorEx">
+                                        Calendario de Exámenes
+                                    </div>
+                                </button>
+                            </div>
+                            <div className="EspacioAñadirEvento">
+                                <button
+                                    id="AddEvent"
+                                    onClick={() =>
+                                        mostrarOcultarMensaje("Añadir")
+                                    }
+                                >
+                                    <div className="addEvent">
+                                        <IoIosAddCircle />
+                                    </div>
+                                </button>
+                                <button
+                                    id="DeleteEvent"
+                                    onClick={() =>
+                                        mostrarOcultarMensaje("Borrar")
+                                    }
+                                >
+                                    <div className="deleteEvent">
+                                        <TiDelete />
+                                    </div>
+                                </button>
+                            </div>
+                            {mostrarFormulario && (
+                                <AñadirEvento
+                                    id={id}
+                                    onAgregarEvento={agregarEvento}
+                                    tipo={mostrarTipoEventos}
+                                    isGlobal={false}
+                                />
+                            )}
+                            {mostrarMensajeAñadido && (
+                                <div className="mensaje-temporal-añadido">
+                                    Evento añadido correctamente
                                 </div>
-                            </button>
-                            <button
-                                id="HorarioDeExamenes"
-                                onClick={() =>
-                                    handleTipoEventosClick("Examenes")
-                                }
-                                className={
-                                    mostrarTipoEventos === "Examenes"
-                                        ? "boton-activo"
-                                        : ""
-                                }
-                            >
-                                <div className="txtHorEx">
-                                    Calendario de Exámenes
-                                </div>
-                            </button>
-                            <button
-                                onClick={() => mostrarOcultarMensaje("Google")}
-                                id="Google"
-                            >
-                                <div className="logoGoogle">
-                                    <FcGoogle />
-                                </div>
-                            </button>
+                            )}
+                            {borrarEvento && (
+                                <EliminarEvento
+                                    tipo={mostrarTipoEventos}
+                                    eventosFormateados={eventosFormateados}
+                                    onEliminarEvento={eliminarEvento}
+                                />
+                            )}
+                            <div className="EspacioGoogleApple">
+                                <button
+                                    onClick={() =>
+                                        mostrarOcultarMensaje("Google")
+                                    }
+                                    id="Google"
+                                >
+                                    <div className="logoGoogle">
+                                        <FcGoogle />
+                                    </div>
+                                </button>
 
-                            <button
-                                onClick={() => mostrarOcultarMensaje("Apple")}
-                                id="Apple"
-                            >
-                                <div className="logoApple">
-                                    <FaApple />
-                                </div>
-                            </button>
+                                <button
+                                    onClick={() =>
+                                        mostrarOcultarMensaje("Apple")
+                                    }
+                                    id="Apple"
+                                >
+                                    <div className="logoApple">
+                                        <FaApple />
+                                    </div>
+                                </button>
+                            </div>
 
                             {mostrarMensajeG && (
-                                <div className="mensaje">
-                                    <p>
-                                        ¿Quieres descargar el archivo .csv para
-                                        importarlo en Google Calendar?
-                                    </p>
-                                    <button
-                                        onClick={() => convertirYDescargarCSV()}
-                                    >
-                                        Sí
-                                    </button>
-                                    <button
-                                        onClick={() =>
-                                            setMostrarMensajeG(false)
-                                        }
-                                    >
-                                        No
-                                    </button>
-                                </div>
+                                <MessageBoxGoogle
+                                    message="¿Quieres descargar el archivo .csv para importarlo en Google Calendar?"
+                                    onConfirm={() => {
+                                        convertirYDescargarCSV();
+                                        setMostrarMensajeG(false);
+                                    }}
+                                    onCancel={() => setMostrarMensajeG(false)}
+                                />
                             )}
 
                             {mostrarMensajeA && (
-                                <div className="mensaje">
-                                    <p>
-                                        Para importar el horario a iOS Calendar
-                                        debes importarlo a Google Calendar
-                                        primero y sincronizar tus cuentas.
-                                    </p>
-                                </div>
+                                <MessageBoxApple
+                                    message="Para importar el horario a iOS Calendar debes importarlo a Google Calendar primero y sincronizar tus cuentas."
+                                    onCancel={() => setMostrarMensajeA(false)}
+                                />
                             )}
                         </div>
                         <Calendario

@@ -11,6 +11,7 @@ router.post("/", async (req, res) => {
         Usuarios.create({
             uo: uo,
             password: hash,
+            admin: 0,
         });
         res.json("SUCCESS");
     });
@@ -30,7 +31,7 @@ router.post("/login", async (req, res) => {
             });
 
         const accessToken = sign(
-            { uo: user.uo, id: user.id },
+            { uo: user.uo, id: user.id, admin: user.admin },
             "importantsecret"
         );
 
@@ -38,12 +39,25 @@ router.post("/login", async (req, res) => {
             token: accessToken,
             uo: uo,
             id: user.id,
+            admin: user.admin,
         });
     });
 });
 
 router.get("/auth", validateToken, (req, res) => {
     res.json(req.user);
+});
+
+router.post("/crearadmin", validateToken, (req, res) => {
+    const { uo, password } = req.body;
+    bcrypt.hash(password, 10).then((hash) => {
+        Usuarios.create({
+            uo: uo,
+            password: hash,
+            admin: 1,
+        });
+        res.json("SUCCESS");
+    });
 });
 
 module.exports = router;

@@ -2,9 +2,12 @@ import React, { useContext } from "react";
 import { AuthContext } from "../helpers/AuthContext";
 import "../estilos/Home.css";
 import Sidebar from "../Components/Sidebar";
+//import Sidebarv2 from "../Components/Sidebar_v2";
 
 function Home() {
     const { authState } = useContext(AuthContext);
+
+    console.log("AuthState", authState);
 
     return (
         <AuthContext.Provider value={{ authState }}>
@@ -16,7 +19,9 @@ function Home() {
                     </h3>
                 </div>
             ) : (
-                <Sidebar id={authState.id} />
+                <div>
+                    <Sidebar id={authState.id} isAdmin={authState.admin} />
+                </div>
             )}
         </AuthContext.Provider>
     );

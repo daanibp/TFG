@@ -1,19 +1,20 @@
+@import url('https://fonts.googleapis.com/css2?family=Lato&display=swap');
+
 .App {
     height: 100vh;
     width: 100vw;
 }
 
 body {
-    margin: 0;
-    padding: 0;
     overflow: hidden;
 }
 
 .navigation {
+    height: 7vh;
+    width: 100vw;
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 10px;
     background-color: #2F4050;
 }
 
@@ -40,6 +41,7 @@ body {
     color: white;
     font-size: 1.5em;
     font-weight: bold;
+    margin-left: 1vw;
 }
 
 .user-info {
@@ -72,6 +74,22 @@ body {
 }
 .rbc-event-content svg {
     margin-right: 5px;
-  }
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+.calendarPage,
+.adminPage {
+  display: flex;
+  height: 90vh;
+  align-items: center;
+  justify-content: center;
+  font-size: 3rem;
+}
+
 
 

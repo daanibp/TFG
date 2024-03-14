@@ -15,8 +15,11 @@ function Registration() {
     const [registroExitoso, setRegistroExitoso] = useState(false);
 
     const validationSchema = Yup.object().shape({
-        uo: Yup.string().min(3).max(15).required(),
-        password: Yup.string().min(4).max(20).required(),
+        uo: Yup.string().min(3).max(15).required("El UO es obligatorio"),
+        password: Yup.string()
+            .min(4)
+            .max(20)
+            .required("La contraseña es obligatoria"),
     });
 
     const onSubmit = (data) => {

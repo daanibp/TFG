@@ -8,12 +8,15 @@ import Login from "./pages/Login";
 import Registration from "./pages/Registration";
 import PageNotFound from "./pages/PageNotFound";
 import CalendarioEscolar from "./pages/CalendarioEscolar";
+import CalendarioGlobal from "./pages/CalendarioGlobal";
 import LoadingIndicator from "./Components/LoadingIndicator";
+import AdminRegistration from "./pages/AdminRegistration";
 
 function App() {
     const [authState, setAuthState] = useState({
         uo: "",
         id: 0,
+        admin: false,
         status: false,
     });
     const [loading, setLoading] = useState(true);
@@ -35,6 +38,7 @@ function App() {
                     setAuthState({
                         uo: response.data.uo,
                         id: response.data.id,
+                        admin: response.data.admin,
                         status: true,
                     });
                 }
@@ -47,6 +51,7 @@ function App() {
         setAuthState({
             uo: "",
             id: 0,
+            admin: false,
             status: false,
         });
     };
@@ -94,8 +99,16 @@ function App() {
                             element={<Registration />}
                         />
                         <Route
-                            path="/calendarioescolar/:id"
+                            path="/calendar/calendarioescolar/:id"
                             element={<CalendarioEscolar />}
+                        />
+                        <Route
+                            path="/calendar/calendarioglobal"
+                            element={<CalendarioGlobal />}
+                        />
+                        <Route
+                            path="/admin/crearadmin"
+                            element={<AdminRegistration />}
                         />
                         <Route path="*" element={<PageNotFound />} />
                     </Routes>
