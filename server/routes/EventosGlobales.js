@@ -34,6 +34,7 @@ router.post("/addGlobalEvent", async (req, res) => {
         private,
         sensitivity,
         showTimeAs,
+        solicitudEventoId,
     } = req.body;
 
     const nuevoEvento = await EventosGlobales.create({
@@ -59,6 +60,7 @@ router.post("/addGlobalEvent", async (req, res) => {
         private,
         sensitivity,
         showTimeAs,
+        solicitudEventoId,
     });
     res.json(nuevoEvento);
 });

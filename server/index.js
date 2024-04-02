@@ -14,6 +14,8 @@ const eventosRouter = require("./routes/Eventos");
 app.use("/eventos", eventosRouter);
 const eventosGlobalesRouter = require("./routes/EventosGlobales");
 app.use("/eventosglobales", eventosGlobalesRouter);
+const solicitudEventosRouter = require("./routes/SolicitudEvento");
+app.use("/solicitudEventos", solicitudEventosRouter);
 
 db.sequelize.sync().then(() => {
     app.listen(5001, () => {

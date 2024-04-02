@@ -92,6 +92,10 @@ module.exports = (sequelize, DataTypes) => {
             type: DataTypes.BOOLEAN,
             allowNull: false,
         },
+        UsuarioId: {
+            type: DataTypes.INTEGER,
+            allowNull: false,
+        },
     });
 
     return Eventos;

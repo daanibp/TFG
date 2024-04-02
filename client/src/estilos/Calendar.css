@@ -42,6 +42,10 @@
     display: flex;
 }
 
+#extraGlobal {
+    margin-left: 1%;
+}
+
 .EspacioGoogleApple {
     display: flex;
     margin-right: 1%;
@@ -278,6 +282,11 @@
     color: white;
     background-color: #2F4050;
     cursor: pointer;
+}
+
+.TituloSolicitud {
+    margin-bottom: 3%;
+    border: 2px solid white;
 }
 
 

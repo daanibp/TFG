@@ -1,4 +1,5 @@
 import React, { useEffect, useState, useContext, useCallback } from "react";
+import { useParams } from "react-router-dom";
 import axios from "axios";
 import dayjs from "dayjs";
 import Calendario from "../Components/Calendario";
@@ -7,12 +8,18 @@ import { AuthContext } from "../helpers/AuthContext";
 import Papa from "papaparse";
 import { FcGoogle } from "react-icons/fc";
 import { FaApple } from "react-icons/fa";
+import { IoIosAddCircle } from "react-icons/io";
+import SolicitarEventoGlobal from "../Components/SolicitarEventoGlobal";
 
 function CalendarioGlobal() {
     const { authState } = useContext(AuthContext);
+    let { id } = useParams();
+
     const [eventosGlobales, setEventosGlobales] = useState([]);
     const [mostrarMensajeG, setMostrarMensajeG] = useState(false);
     const [mostrarMensajeA, setMostrarMensajeA] = useState(false);
+    const [mostrarFormulario, setMostrarFormulario] = useState(false);
+    const [mostrarMensajeAñadido, setMostrarMensajeAñadido] = useState(false);
 
     useEffect(() => {
         axios.get(`http://localhost:5001/eventosglobales`).then((response) => {
@@ -54,6 +61,11 @@ function CalendarioGlobal() {
                         (prevMostrarMensajeA) => !prevMostrarMensajeA
                     );
                     setMostrarMensajeG(false);
+                    break;
+                case "Solicitar":
+                    setMostrarFormulario(
+                        (prevMostrarFormulario) => !prevMostrarFormulario
+                    );
                     break;
                 default:
                     break;
@@ -215,6 +227,21 @@ function CalendarioGlobal() {
         window.open("https://calendar.google.com/", "_blank");
     };
 
+    // Función para agregar un evento al estado
+    const solicitarEvento = (nuevoEvento) => {
+        setEventosGlobales((prevEventosGlobales) => [
+            ...prevEventosGlobales,
+            nuevoEvento,
+        ]);
+        setMostrarFormulario(false);
+        // Mostrar el mensaje temporal
+        setMostrarMensajeAñadido(true);
+        // Ocultar el mensaje después de 1 segundo
+        setTimeout(() => {
+            setMostrarMensajeAñadido(false);
+        }, 1000);
+    };
+
     return (
         <div>
             <AuthContext.Provider value={{ authState }}>
@@ -240,6 +267,31 @@ function CalendarioGlobal() {
                                 </div>
                             </div>
                             <div className="opcionesBotones">
+                                <div
+                                    className="EspacioAñadirEvento"
+                                    id="extraGlobal"
+                                >
+                                    <button
+                                        id="AddEvent"
+                                        onClick={() =>
+                                            mostrarOcultarMensaje("Solicitar")
+                                        }
+                                    >
+                                        <div className="addEvent">
+                                            <IoIosAddCircle />
+                                        </div>
+                                    </button>
+                                </div>
+                                {mostrarFormulario && (
+                                    <SolicitarEventoGlobal
+                                        onSolicitarEvento={solicitarEvento}
+                                    />
+                                )}
+                                {mostrarMensajeAñadido && (
+                                    <div className="mensaje-temporal-añadido">
+                                        Solicitud enviada correctamente
+                                    </div>
+                                )}
                                 <div className="EspacioGoogleApple">
                                     <button
                                         onClick={() =>
