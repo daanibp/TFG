@@ -11,6 +11,7 @@ import CalendarioEscolar from "./pages/CalendarioEscolar";
 import CalendarioGlobal from "./pages/CalendarioGlobal";
 import LoadingIndicator from "./Components/LoadingIndicator";
 import AdminRegistration from "./pages/AdminRegistration";
+import GestionCalendarios from "./pages/GestionCalendarios";
 
 function App() {
     const [authState, setAuthState] = useState({
@@ -109,6 +110,10 @@ function App() {
                         <Route
                             path="/admin/crearadmin"
                             element={<AdminRegistration />}
+                        />
+                        <Route
+                            path="/admin/gestioncalendarios"
+                            element={<GestionCalendarios />}
                         />
                         <Route path="*" element={<PageNotFound />} />
                     </Routes>

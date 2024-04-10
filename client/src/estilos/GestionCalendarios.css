@@ -1,0 +1,196 @@
+.containerGestion {
+    display: flex;
+    justify-content: space-between;
+    height: 100%;
+}
+
+.boxEventos {
+    position: flex;
+    height: 82%;
+    width: 40%;
+    margin-left: 1.7%;
+    margin-top: 2%;
+    border: 2px solid #2F4050;
+}
+
+.boxEventosGlobales {
+    position: flex;
+    height: 82%;
+    width: 40%;
+    margin-right: 1.7%;
+    margin-top: 2%;
+    border: 2px solid #2F4050;
+} 
+
+.Titulo {
+    margin-top: 2%;
+    text-align: center;
+    border: 1px solid #2F4050;
+    margin-left: 1%;
+    margin-right: 1%;
+}
+
+.CargarClases {
+    text-align: center;
+    font-size: 20px;
+    margin-top: 5%;
+    margin-bottom: 1%;
+}
+
+.GenerarExamenes {
+    text-align: center;
+    font-size: 20px;
+    margin-top: 5%;
+    margin-bottom: 1%;
+}
+
+.GestionarSolicitudes {
+    text-align: center;
+    font-size: 20px;
+    margin-top: 5%;
+}
+
+.CargarFichero {
+    justify-content: center;
+    text-align: center;
+}
+
+.boxSolicitudes {
+    margin-top: 2%;
+    text-align: center;
+    border: 1px solid #2F4050;
+    margin-left: 5%;
+    margin-right: 5%;
+    overflow-x: auto; /* Activar scroll horizontal si es necesario */
+    white-space: nowrap; /* Evitar que los elementos se envuelvan */
+}
+
+.boxSolicitudes table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.boxSolicitudes th,
+.boxSolicitudes td {
+    border: 1px solid #ccc;
+    padding: 8px;
+    text-align: center;
+}
+
+.boxSolicitudes th {
+    background-color: #2F4050;
+    color: white;
+}
+
+.botonAceptar {
+    width: 30%;
+    height: 100%;
+    background-color: #08b925;
+    color: white;
+    border: none;
+    margin-left: 5px;
+    cursor: pointer;
+    font-size: 20px;
+}
+.botonDenegar {
+    width: 30%;
+    height: 100%;
+    background-color: #e70000;
+    color: white;
+    border: none;
+    margin-left: 5px;
+    cursor: pointer;
+    font-size: 20px;
+}
+.botonDetalles {
+    width: 50%;
+    height: 100%;
+    background-color: #2F4050;
+    color: white;
+    border: none;
+    margin-left: 10%;
+    cursor: pointer;
+    font-size: 14px;
+}
+
+.fa-eye {
+    font-size: 16px;
+}
+
+.solicitudDetails {
+    border: 1px solid #2F4050;
+    background-color: #2F4050;
+    width: 300px;
+    height: auto;
+    position: fixed;
+    top: 50%;
+    left: 57.5%;
+    transform: translate(-50%, -50%);
+    z-index: 100000;
+    color: white;
+    text-align: center;
+}
+
+.solicitudDetails h2{
+    margin: 3%;
+}
+
+.solicitudDetails p {
+    margin-left: 5%;
+    margin-bottom: 1%;
+}
+
+.solicitudDetails button{
+    margin-top: 5%;
+    cursor: pointer;
+    background-color: #2F4050;
+    border: 1px solid white;
+    color: white;
+    font-size: 18px;
+}
+
+.solicitudDetails button:hover {
+    background-color: #253341;
+}
+
+.GestionarSolicitudes button {
+    width: 5vw;
+    height: 3vh;
+    border: 1px solid #2F4050;
+    cursor: pointer;
+}
+
+.GestionarSolicitudes button:hover {
+    background-color: #ccc;
+}
+
+.button-active {
+    background-color: #2F4050;
+    color: white;
+}
+
+.button-active:hover {
+    background-color: #253341 !important;
+}
+
+.boxEventos button {
+    border: 1px solid #2F4050;
+    background-color: #2F4050;
+    color: white;
+    width: 40%;
+    font-size: 90%;
+    cursor: pointer;
+}
+
+.boxEventos button:hover {
+    background-color: #253341;
+}
+
+input[type="file"] {
+    background-color: #2F4050;
+    color: white;
+    padding: 10px 15px;
+    border-radius: 5px;
+    cursor: pointer;
+}
+

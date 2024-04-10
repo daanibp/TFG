@@ -60,4 +60,21 @@ router.post("/crearadmin", validateToken, (req, res) => {
     });
 });
 
+router.get("/:id", async (req, res) => {
+    const { id } = req.params;
+
+    try {
+        const user = await Usuarios.findByPk(id);
+
+        if (!user) {
+            return res.status(404).json({ error: "Usuario no encontrado" });
+        }
+
+        return res.json({ uo: user.uo });
+    } catch (error) {
+        console.error("Error al buscar el usuario:", error);
+        return res.status(500).json({ error: "Error del servidor" });
+    }
+});
+
 module.exports = router;

@@ -1,5 +1,4 @@
 import React, { useEffect, useState, useContext, useCallback } from "react";
-import { useParams } from "react-router-dom";
 import axios from "axios";
 import dayjs from "dayjs";
 import Calendario from "../Components/Calendario";
@@ -13,7 +12,6 @@ import SolicitarEventoGlobal from "../Components/SolicitarEventoGlobal";
 
 function CalendarioGlobal() {
     const { authState } = useContext(AuthContext);
-    let { id } = useParams();
 
     const [eventosGlobales, setEventosGlobales] = useState([]);
     const [mostrarMensajeG, setMostrarMensajeG] = useState(false);
@@ -227,12 +225,12 @@ function CalendarioGlobal() {
         window.open("https://calendar.google.com/", "_blank");
     };
 
-    // Función para agregar un evento al estado
+    // Función para solicitar un evento global
     const solicitarEvento = (nuevoEvento) => {
-        setEventosGlobales((prevEventosGlobales) => [
+        /*setEventosGlobales((prevEventosGlobales) => [
             ...prevEventosGlobales,
             nuevoEvento,
-        ]);
+        ]);*/
         setMostrarFormulario(false);
         // Mostrar el mensaje temporal
         setMostrarMensajeAñadido(true);
@@ -285,6 +283,7 @@ function CalendarioGlobal() {
                                 {mostrarFormulario && (
                                     <SolicitarEventoGlobal
                                         onSolicitarEvento={solicitarEvento}
+                                        userId={authState.id}
                                     />
                                 )}
                                 {mostrarMensajeAñadido && (

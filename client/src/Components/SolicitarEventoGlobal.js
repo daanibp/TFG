@@ -7,7 +7,7 @@ import "react-datepicker/dist/react-datepicker.css";
 import "react-clock/dist/Clock.css";
 import "../estilos/AñadirEvento.css";
 
-function SolicitarEventoGlobal({ onSolicitarEvento }) {
+function SolicitarEventoGlobal({ onSolicitarEvento, userId }) {
     const [fechaComienzo, setFechaComienzo] = useState(new Date());
     const [fechaFinalización, setFechaFinalización] = useState(new Date());
     const [fechaRecordatorio, setFechaRecordatorio] = useState(new Date());
@@ -24,6 +24,7 @@ function SolicitarEventoGlobal({ onSolicitarEvento }) {
     const [recordarmeIsTrue, setRecordarmeIsTrue] = useState(false);
 
     const initialValues = {
+        estado: "Pendiente",
         asunto: "",
         HorasComienzo: "08",
         MinutosComienzo: "00",
@@ -139,8 +140,9 @@ function SolicitarEventoGlobal({ onSolicitarEvento }) {
 
         try {
             const response = await axios.post(
-                "http://localhost:5001/eventosGlobales/addGlobalEvent",
+                "http://localhost:5001/solicitudEventos/addSolicitudEvento",
                 {
+                    estado: data.estado,
                     asunto: data.asunto,
                     fechaDeComienzo: fechaC,
                     comienzo: newHoraComienzo,
@@ -163,6 +165,7 @@ function SolicitarEventoGlobal({ onSolicitarEvento }) {
                     private: data.privado,
                     sensitivity: data.sensibilidad,
                     showTimeAs: 2,
+                    UsuarioId: userId,
                 }
             );
             onSolicitarEvento(response.data);
