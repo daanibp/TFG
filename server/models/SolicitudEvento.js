@@ -92,6 +92,10 @@ module.exports = (sequelize, DataTypes) => {
             type: DataTypes.STRING,
             allowNull: false,
         },
+        UsuarioId: {
+            type: DataTypes.INTEGER,
+            allowNull: false,
+        },
     });
 
     SolicitudEvento.associate = (models) => {

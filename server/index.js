@@ -16,6 +16,12 @@ const eventosGlobalesRouter = require("./routes/EventosGlobales");
 app.use("/eventosglobales", eventosGlobalesRouter);
 const solicitudEventosRouter = require("./routes/SolicitudEvento");
 app.use("/solicitudEventos", solicitudEventosRouter);
+const MatriculacionRouter = require("./routes/Matriculacion");
+app.use("/matriculacion", MatriculacionRouter);
+const AsignaturasRouter = require("./routes/Asignaturas");
+app.use("/asignaturas", AsignaturasRouter);
+const GrupoRouter = require("./routes/Grupo");
+app.use("/grupo", GrupoRouter);
 
 db.sequelize.sync().then(() => {
     app.listen(5001, () => {
