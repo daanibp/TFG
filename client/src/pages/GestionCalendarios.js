@@ -3,6 +3,7 @@ import axios from "axios";
 import { AuthContext } from "../helpers/AuthContext";
 import Sidebar from "../Components/Sidebar";
 import "../estilos/GestionCalendarios.css";
+import { ProcesaExcelHorarios } from "../helpers/ProcesaExcelHorarios";
 
 function GestionCalendarios() {
     const { authState } = useContext(AuthContext);
@@ -12,13 +13,38 @@ function GestionCalendarios() {
     const [usuarioSolicitante, setUsuarioSolicitante] = useState(null);
     const [filtroEstado, setFiltroEstado] = useState("Todos");
 
+    const [asignaturas, setAsignaturas] = useState([]);
+    const [grupos, setGrupos] = useState([]);
+
     const [selectedScheduleFile, setSelectedScheduleFile] = useState(null);
     const [selectedExamFile, setSelectedExamFile] = useState(null);
+
+    // Función para obtener el ID de la asignatura
+    const obtenerIdAsignatura = async (idAsignatura) => {
+        try {
+            const response = await axios.get(
+                `http://localhost:5001/asignaturas/${idAsignatura}`
+            );
+            // Devuelve el ID de la asignatura si se encuentra en la base de datos
+            return response.data.idAsignatura;
+        } catch (error) {
+            console.error("Error al obtener el ID de la asignatura:", error);
+            return null;
+        }
+    };
 
     useEffect(() => {
         axios.get(`http://localhost:5001/solicitudEventos`).then((response) => {
             console.log("Solicitudes: ", response.data);
             setSolicitudes(response.data);
+        });
+        axios.get(`http://localhost:5001/asignaturas`).then((response) => {
+            console.log("Asignaturas: ", response.data);
+            setAsignaturas(response.data);
+        });
+        axios.get(`http://localhost:5001/grupos`).then((response) => {
+            console.log("Grupos: ", response.data);
+            setGrupos(response.data);
         });
     }, []);
 
@@ -87,14 +113,81 @@ function GestionCalendarios() {
         setSelectedExamFile(event.target.files[0]);
     };
 
+    // Función para determinar el cuatrimestre basado en el nombre del archivo
+    function determinarCuatrimestre(nombreArchivo) {
+        if (nombreArchivo.endsWith("2C.xlsx")) {
+            return "C2";
+        } else if (nombreArchivo.endsWith("1C.xlsx")) {
+            return "C1";
+        } else {
+            // Si el nombre del archivo no termina en "1C" o "2C", puedes devolver un valor por defecto o lanzar un error
+            throw new Error("El nombre del archivo no es válido");
+        }
+    }
+
+    /*// Función para manejar la subida del archivo de asignaturas
+    const handleAsignaturaFileUpload = (selectedAsignaturaFile) => {
+        if (selectedAsignaturaFile) {
+            console.log(
+                "Archivo de asignaturas seleccionado:",
+                selectedAsignaturaFile
+            );
+            // Enviar el archivo al servidor para su procesamiento
+            CargarAsignaturas(
+                selectedAsignaturaFile,
+                ["Asignaturas"],
+                handleAsignaturaProcessed
+            );
+        } else {
+            alert(
+                "Por favor selecciona un archivo de asignaturas antes de subirlo."
+            );
+        }
+    };*/
+
     // Función para manejar la subida del archivo de horarios de clases
-    const handleScheduleFileUpload = () => {
+    const handleScheduleFileUpload = async () => {
         if (selectedScheduleFile) {
             console.log(
                 "Archivo de horarios de clases seleccionado:",
                 selectedScheduleFile
             );
-            // Enviar el archivo al servidor para su procesamiento
+
+            // Obtener el nombre del archivo
+            const nombreArchivo = selectedScheduleFile.name;
+
+            try {
+                // Crear las asignaturas si no están creadas
+                /*CargarAsignaturas(
+                    selectedScheduleFile,
+                    handleAsignaturaProcessed
+                ); // ya tenemos todas las asignaturas en la BBDD y en asignaturas []*/
+
+                // Determinar el cuatrimestre basado en el nombre del archivo
+                const cuatri = determinarCuatrimestre(nombreArchivo);
+
+                // Enviar el archivo al servidor para su procesamiento
+                ProcesaExcelHorarios(
+                    selectedScheduleFile,
+                    [
+                        "1ITIN_A",
+                        "1ITIN_B",
+                        "2ITIN_A",
+                        "2ITIN_ING",
+                        "3ITIN_A",
+                        "4ITIN_A",
+                    ],
+                    async (lineData) => {
+                        // Manejar la creación de asignaturas
+                        handleLineProcessed(lineData);
+                        // Manejar la creación de grupos
+                        //await handleGrupoProcessed(lineData);
+                    },
+                    cuatri
+                );
+            } catch (error) {
+                console.error("Error:", error.message);
+            }
         } else {
             alert(
                 "Por favor selecciona un archivo de horarios de clases antes de subirlo."
@@ -140,6 +233,129 @@ function GestionCalendarios() {
         if (filtroEstado === "Todos") return true;
         return solicitud.estado === filtroEstado;
     });
+
+    // Función para manejar los resultados del procesamiento de una línea del archivo Excel
+    const handleLineProcessed = async (lineData) => {
+        console.log("Datos de la línea procesada:", lineData);
+        // CREAR EL EVENTO CON LOS DATOS PROCESADOS
+        // para cada usuario que tenga lineData.Asignatura y pertenezca al grupo lineData.grupo se crea el evento
+
+        // Crear las asignaturas si no están creadas
+        await handleAsignaturaProcessed(lineData);
+        // Crear los grupos para cada asignatura si no están creados
+        await handleGrupoProcessed(lineData);
+        // Tras tener la asignatura y grupo chequeado de esta línea => se crea el evento
+
+        // Recorremos los usuarios
+        // Miramos si este usuario está matriculado en lineData.Asignatura y pertenece a lineData.grupo
+        // Creamos el evento
+    };
+
+    // Función para cargar las asignaturas en la BBDD si no lo están
+    const handleAsignaturaProcessed = async (lineData) => {
+        // Verificar si ya existe una asignatura con el mismo id en la base de datos
+        const asignaturaExistente = asignaturas.find(
+            (asignatura) => asignatura.idAsignatura === lineData.id
+        );
+
+        if (asignaturaExistente) {
+            console.log(
+                "La asignatura " +
+                    lineData.abr +
+                    " ya existe en la base de datos."
+            );
+            // No hacer nada si la asignatura ya existe
+        } else {
+            console.log(
+                "La asignatura " +
+                    lineData.abr +
+                    " no existe en la base de datos."
+            );
+
+            const nuevaAsignatura = {
+                idAsignatura: lineData.id,
+                nombreReal: lineData.nombre,
+                nombreHorario: lineData.abr,
+                nombreExamen: lineData.abr,
+            };
+            console.log("Nueva Asignatura: ", nuevaAsignatura);
+            // Agregar la nueva asignatura al array de asignaturas
+            asignaturas.push(nuevaAsignatura);
+            // Añadirla a la base de datos
+            await axios.post(
+                "http://localhost:5001/asignaturas/addAsignatura",
+                nuevaAsignatura
+            );
+        }
+    };
+
+    // Función para manejar la información de los grupos
+    const handleGrupoProcessed = async (lineData) => {
+        try {
+            // Obtener el ID de la asignatura asociada al grupo
+            const idAsignatura = await obtenerIdAsignatura(lineData.id);
+            console.log("ID Asignatura: ", idAsignatura);
+
+            // Verificar si ya existe un grupo con el mismo nombre en la base de datos
+            const grupoExistente = grupos.find(
+                (grupo) => grupo.nombre === lineData.grupo
+            );
+            if (!grupoExistente) {
+                console.log(
+                    "El grupo " +
+                        lineData.grupo +
+                        " no existe en la base de datos."
+                );
+                // Crear un nuevo objeto de grupo
+                const nuevoGrupo = {
+                    nombre: lineData.grupo,
+                    tipo: getTipoGrupo(lineData.grupo),
+                    AsignaturaId: idAsignatura,
+                };
+                console.log("Nuevo Grupo: ", nuevoGrupo);
+                grupos.push(nuevoGrupo);
+                // Añadir a la BBDD
+                /*await axios.post(
+                    "http://localhost:5001/grupos/addGrupo",
+                    nuevoGrupo
+                );
+                // Actualizar la lista de grupos después de la creación del nuevo grupo
+                const response = await axios.get(
+                    "http://localhost:5001/grupos"
+                );
+                setGrupos(response.data);
+                */
+            } else {
+                console.log(
+                    "El grupo " +
+                        lineData.grupo +
+                        " ya existe en la base de datos."
+                );
+            }
+        } catch (error) {
+            console.error("Error en el procesamiento de grupos:", error);
+        }
+    };
+
+    // Función para obtener el tipo de grupo a partir del nombre del grupo
+    const getTipoGrupo = (nombreGrupo) => {
+        // Verificar si el nombre del grupo empieza por PL
+        if (nombreGrupo.startsWith("PL")) {
+            return "PL";
+        }
+        // Verificar si el nombre del grupo empieza por PA
+        else if (nombreGrupo.startsWith("PA")) {
+            return "PA";
+        }
+        // Verificar si el nombre del grupo empieza por TG
+        else if (nombreGrupo.startsWith("TG")) {
+            return "TG";
+        }
+        // Si no cumple ninguna de las condiciones anteriores, devolver "Teoría"
+        else {
+            return "Teoría";
+        }
+    };
 
     return (
         <AuthContext.Provider value={{ authState }}>

@@ -1,5 +1,9 @@
 module.exports = (sequelize, DataTypes) => {
     const Asignaturas = sequelize.define("Asignaturas", {
+        idAsignatura: {
+            type: DataTypes.STRING,
+            allowNull: false,
+        },
         nombreReal: {
             type: DataTypes.STRING,
             allowNull: false,
@@ -21,7 +25,7 @@ module.exports = (sequelize, DataTypes) => {
     };
 
     Asignaturas.associate = (models) => {
-        Asignaturas.hasMany(models.Matriculacion, {
+        Asignaturas.hasMany(models.Matriculaciones, {
             onDelete: "cascade",
         });
     };
