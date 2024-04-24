@@ -1,5 +1,11 @@
 module.exports = (sequelize, DataTypes) => {
     const Asignaturas = sequelize.define("Asignaturas", {
+        id: {
+            type: DataTypes.INTEGER,
+            allowNull: false,
+            unique: true,
+            primaryKey: true,
+        },
         idAsignatura: {
             type: DataTypes.STRING,
             allowNull: false,

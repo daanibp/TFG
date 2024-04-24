@@ -62,7 +62,6 @@ export function ProcesaExcelHorarios(file, hojasAProcesar, callback, cuatri) {
                 } catch (error) {
                     // Manejar el error sin propagarlo hacia arriba
                     console.error("Error en obtenerFecha:", error);
-                    // Puedes hacer algo aquí para manejar el error, como mostrar un mensaje de error o registrar el problema
                 }
             });
         }
@@ -72,7 +71,7 @@ export function ProcesaExcelHorarios(file, hojasAProcesar, callback, cuatri) {
             for (let i = 0; i < dataAsignaturas.length; i++) {
                 const row = dataAsignaturas[i];
                 if (row[0].endsWith(codigoAsignatura)) {
-                    return { id: row[0], nombre: row[2] }; // Devolver el valor de la tercera columna (nombre de la asignatura)
+                    return { idNumerico: i - 1, id: row[0], nombre: row[2] };
                 }
             }
             return "Asignatura no encontrada"; // Devolver un valor predeterminado si no se encuentra la asignatura
@@ -113,14 +112,25 @@ export function ProcesaExcelHorarios(file, hojasAProcesar, callback, cuatri) {
             return fechaLegible;
         }
 
+        // Variable para rastrear si estás en la última hoja
+        //let esUltimaHoja = false;
         // Iterar sobre las hojas especificadas
-        hojasAProcesar.forEach((hoja) => {
+        hojasAProcesar.forEach((hoja, hojaIndex) => {
             const sheet = workbook.Sheets[hoja];
             const data = XLSX.utils.sheet_to_json(sheet, { header: 1 });
+
+            // Obtener el número total de líneas a procesar
+            //const totalLineas = data.length - 3; // Descontamos las primeras 3 filas
+
+            // Llevar un seguimiento del número de líneas procesadas
+            //let lineasProcesadas = 0;
 
             // Iterar sobre cada fila de datos a partir de la fila 4
             for (let rowIndex = 3; rowIndex < data.length; rowIndex++) {
                 const row = data[rowIndex];
+
+                // Verificar si es la última línea procesada
+                //const esUltimaLinea = rowIndex === totalLineas - 1;
 
                 if (!row[0]) {
                     continue;
@@ -135,6 +145,8 @@ export function ProcesaExcelHorarios(file, hojasAProcesar, callback, cuatri) {
                     const asignatura = obtenerNombreAsignatura(
                         row[columnaInicio]
                     );
+                    //const lastLine =
+                    const idNumerico = asignatura.idNumerico;
                     const id = asignatura.id;
                     const nombre = asignatura.nombre;
                     const abr = row[columnaInicio];
@@ -193,6 +205,7 @@ export function ProcesaExcelHorarios(file, hojasAProcesar, callback, cuatri) {
                                         const fechaLegible =
                                             obtenerFechaLegible(fecha);
                                         resolve({
+                                            idNumerico,
                                             id,
                                             nombre,
                                             abr,
@@ -239,6 +252,11 @@ export function ProcesaExcelHorarios(file, hojasAProcesar, callback, cuatri) {
                     }
                 }
             }
+            // Verificar si es la última hoja
+            /*const esUltimaHojaActual = hojaIndex === hojasAProcesar.length - 1;
+            if (esUltimaHojaActual) {
+                esUltimaHoja = true;
+            }*/
         });
     };
 

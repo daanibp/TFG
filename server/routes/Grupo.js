@@ -27,10 +27,12 @@ router.post("/addGrupo", async (req, res) => {
 });
 
 router.post("/addGrupos", async (req, res) => {
-    const { grupos } = req.body;
+    const grupos = req.body; // Suponiendo que req.body es un arreglo de grupos
     try {
+        // Insertar todos los grupos en la base de datos
         await Grupo.bulkCreate(grupos);
-        console.log("Grupos creados exitosamente");
+        console.log("Creando los siguientes Grupos: ", grupos);
+        // Devolver una respuesta exitosa
         res.status(201).send("Grupos creados exitosamente");
     } catch (error) {
         console.error("Error al crear los grupos:", error);

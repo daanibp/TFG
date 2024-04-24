@@ -11,9 +11,11 @@ router.get("/", async (req, res) => {
 });
 
 router.post("/addAsignatura", async (req, res) => {
-    const { idAsignatura, nombreReal, nombreHorario, nombreExamen } = req.body;
+    const { id, idAsignatura, nombreReal, nombreHorario, nombreExamen } =
+        req.body;
     try {
         await Asignaturas.create({
+            id: id,
             idAsignatura: idAsignatura,
             nombreReal: nombreReal,
             nombreHorario: nombreHorario,

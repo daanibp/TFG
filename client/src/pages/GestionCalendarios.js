@@ -19,6 +19,8 @@ function GestionCalendarios() {
     const [selectedScheduleFile, setSelectedScheduleFile] = useState(null);
     const [selectedExamFile, setSelectedExamFile] = useState(null);
 
+    let gruposAux = [];
+
     // Función para obtener el ID de la asignatura
     const obtenerIdAsignatura = async (idAsignatura) => {
         try {
@@ -125,29 +127,13 @@ function GestionCalendarios() {
         }
     }
 
-    /*// Función para manejar la subida del archivo de asignaturas
-    const handleAsignaturaFileUpload = (selectedAsignaturaFile) => {
-        if (selectedAsignaturaFile) {
-            console.log(
-                "Archivo de asignaturas seleccionado:",
-                selectedAsignaturaFile
-            );
-            // Enviar el archivo al servidor para su procesamiento
-            CargarAsignaturas(
-                selectedAsignaturaFile,
-                ["Asignaturas"],
-                handleAsignaturaProcessed
-            );
-        } else {
-            alert(
-                "Por favor selecciona un archivo de asignaturas antes de subirlo."
-            );
-        }
-    };*/
-
-    // Función para manejar la subida del archivo de horarios de clases
     const handleScheduleFileUpload = async () => {
-        if (selectedScheduleFile) {
+        return new Promise(async (resolve, reject) => {
+            if (!selectedScheduleFile) {
+                reject(new Error("No se seleccionó ningún archivo."));
+                return;
+            }
+
             console.log(
                 "Archivo de horarios de clases seleccionado:",
                 selectedScheduleFile
@@ -157,42 +143,42 @@ function GestionCalendarios() {
             const nombreArchivo = selectedScheduleFile.name;
 
             try {
-                // Crear las asignaturas si no están creadas
-                /*CargarAsignaturas(
-                    selectedScheduleFile,
-                    handleAsignaturaProcessed
-                ); // ya tenemos todas las asignaturas en la BBDD y en asignaturas []*/
-
                 // Determinar el cuatrimestre basado en el nombre del archivo
                 const cuatri = determinarCuatrimestre(nombreArchivo);
 
-                // Enviar el archivo al servidor para su procesamiento
-                ProcesaExcelHorarios(
-                    selectedScheduleFile,
-                    [
-                        "1ITIN_A",
-                        "1ITIN_B",
-                        "2ITIN_A",
-                        "2ITIN_ING",
-                        "3ITIN_A",
-                        "4ITIN_A",
-                    ],
-                    async (lineData) => {
-                        // Manejar la creación de asignaturas
-                        handleLineProcessed(lineData);
-                        // Manejar la creación de grupos
-                        //await handleGrupoProcessed(lineData);
-                    },
-                    cuatri
-                );
+                // Procesar el archivo de horarios de clases
+                await new Promise((resolve, reject) => {
+                    ProcesaExcelHorarios(
+                        selectedScheduleFile,
+                        [
+                            "1ITIN_A",
+                            "1ITIN_B",
+                            "2ITIN_A",
+                            "2ITIN_ING",
+                            "3ITIN_A",
+                            "4ITIN_A",
+                        ],
+                        async (lineData) => {
+                            try {
+                                await handleAsignaturaProcessed(lineData);
+                                handleGrupoProcessed(lineData);
+                                resolve();
+                            } catch (error) {
+                                reject(error);
+                            }
+                        },
+                        cuatri
+                    );
+                });
+
+                // Resolver la promesa después de procesar el archivo
+                resolve();
             } catch (error) {
+                // Si ocurre un error, rechazar la promesa
                 console.error("Error:", error.message);
+                reject(error);
             }
-        } else {
-            alert(
-                "Por favor selecciona un archivo de horarios de clases antes de subirlo."
-            );
-        }
+        });
     };
 
     // Función para manejar la subida del archivo de exámenes
@@ -234,6 +220,16 @@ function GestionCalendarios() {
         return solicitud.estado === filtroEstado;
     });
 
+    const AgregarGrupos = async (grupos) => {
+        console.log("Grupossss: ", grupos);
+        try {
+            await axios.post("http://localhost:5001/grupos/addGrupos", grupos);
+            console.log("Los grupos se han agregado correctamente.");
+        } catch (error) {
+            console.error("Error al agregar grupos:", error);
+        }
+    };
+
     // Función para manejar los resultados del procesamiento de una línea del archivo Excel
     const handleLineProcessed = async (lineData) => {
         console.log("Datos de la línea procesada:", lineData);
@@ -244,6 +240,9 @@ function GestionCalendarios() {
         await handleAsignaturaProcessed(lineData);
         // Crear los grupos para cada asignatura si no están creados
         await handleGrupoProcessed(lineData);
+        // Añado grupos a la BBDD
+        //await axios.post("http://localhost:5001/grupos/addGrupos", grupos);
+
         // Tras tener la asignatura y grupo chequeado de esta línea => se crea el evento
 
         // Recorremos los usuarios
@@ -254,6 +253,7 @@ function GestionCalendarios() {
     // Función para cargar las asignaturas en la BBDD si no lo están
     const handleAsignaturaProcessed = async (lineData) => {
         // Verificar si ya existe una asignatura con el mismo id en la base de datos
+        console.log("Datos de la línea procesada:", lineData);
         const asignaturaExistente = asignaturas.find(
             (asignatura) => asignatura.idAsignatura === lineData.id
         );
@@ -273,6 +273,7 @@ function GestionCalendarios() {
             );
 
             const nuevaAsignatura = {
+                id: lineData.idNumerico,
                 idAsignatura: lineData.id,
                 nombreReal: lineData.nombre,
                 nombreHorario: lineData.abr,
@@ -290,7 +291,7 @@ function GestionCalendarios() {
     };
 
     // Función para manejar la información de los grupos
-    const handleGrupoProcessed = async (lineData) => {
+    /*const handleGrupoProcessed = async (lineData) => {
         try {
             // Obtener el ID de la asignatura asociada al grupo
             const idAsignatura = await obtenerIdAsignatura(lineData.id);
@@ -324,7 +325,7 @@ function GestionCalendarios() {
                     "http://localhost:5001/grupos"
                 );
                 setGrupos(response.data);
-                */
+                
             } else {
                 console.log(
                     "El grupo " +
@@ -334,6 +335,61 @@ function GestionCalendarios() {
             }
         } catch (error) {
             console.error("Error en el procesamiento de grupos:", error);
+        }
+    };*/
+
+    const handleGrupoProcessed = (lineData) => {
+        try {
+            // Buscar la asignatura necesaria en la lista de asignaturas
+            const asignatura = asignaturas.find(
+                (asignatura) => asignatura.idAsignatura === lineData.id
+            );
+
+            console.log(asignatura);
+
+            let idAsignatura = 0;
+            if (asignatura) {
+                // Obtener el ID de la asignatura
+                idAsignatura = asignatura.id;
+                console.log("ID asignatura: ", idAsignatura);
+            } else {
+                console.error("No se encontró la asignatura:", lineData.id);
+            }
+
+            const grupoExistente = grupos.find(
+                (grupo) => grupo.nombre === lineData.grupo
+            );
+            if (!grupoExistente) {
+                console.log(
+                    "El grupo " +
+                        lineData.grupo +
+                        " no existe en la base de datos."
+                );
+                // Crear un nuevo objeto de grupo
+                const nuevoGrupo = {
+                    nombre: lineData.grupo,
+                    tipo: getTipoGrupo(lineData.grupo),
+                    AsignaturaId: idAsignatura,
+                };
+                console.log("Nuevo Grupo: ", nuevoGrupo);
+                grupos.push(nuevoGrupo);
+                gruposAux = [...gruposAux, gruposAux];
+                /*const nuevosGrupos = [...grupos, nuevoGrupo];
+                setGrupos(nuevosGrupos); // Actualizar el estado con la nueva copia*/
+                console.log(
+                    "Actualizacion grupos numero: ",
+                    grupos.length,
+                    grupos
+                );
+            } else {
+                console.log(
+                    "El grupo " +
+                        lineData.grupo +
+                        " ya existe en la base de datos."
+                );
+            }
+        } catch (error) {
+            console.error("Error al procesar los grupos:", error);
         }
     };
 
@@ -392,7 +448,20 @@ function GestionCalendarios() {
                                         accept=".csv"
                                         onChange={handleScheduleFileChange}
                                     />
-                                    <button onClick={handleScheduleFileUpload}>
+                                    <button
+                                        onClick={() =>
+                                            handleScheduleFileUpload()
+                                                .then(() => {
+                                                    AgregarGrupos(grupos);
+                                                })
+                                                .catch((error) => {
+                                                    console.error(
+                                                        "Error al procesar el archivo de horarios:",
+                                                        error
+                                                    );
+                                                })
+                                        }
+                                    >
                                         Cargar horarios de clases
                                     </button>
                                 </div>
@@ -406,7 +475,9 @@ function GestionCalendarios() {
                                         accept=".csv"
                                         onChange={handleExamFileChange}
                                     />
-                                    <button onClick={handleExamFileUpload}>
+                                    <button
+                                        onClick={() => handleExamFileUpload()}
+                                    >
                                         Cargar calendario de exámenes
                                     </button>
                                 </div>
