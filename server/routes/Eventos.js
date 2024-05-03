@@ -97,4 +97,35 @@ router.delete("/delete/:eventoId", async (req, res) => {
     }
 });
 
+router.post("/addLoteEventos", async (req, res) => {
+    try {
+        const eventos = req.body; // Array de eventos
+
+        // Contador para llevar el registro de los eventos agregados
+        let eventosAgregados = 0;
+
+        // Iterar sobre cada evento en el array
+        for (const evento of eventos) {
+            // Verificar si el evento ya existe en la base de datos
+            const eventoExistente = await Eventos.findOne({
+                where: { id: evento.id },
+            });
+
+            // Si el evento no existe, agregarlo a la base de datos
+            if (!eventoExistente) {
+                await Eventos.create(evento);
+                eventosAgregados++;
+            }
+        }
+
+        // Responder con un mensaje indicando cuántos eventos se agregaron correctamente
+        res.json({
+            message: `Se agregaron ${eventosAgregados} eventos correctamente.`,
+        });
+    } catch (error) {
+        console.error("Error al agregar eventos:", error.message);
+        res.status(500).json({ message: "Error interno del servidor" });
+    }
+});
+
 module.exports = router;

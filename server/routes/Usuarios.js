@@ -77,4 +77,27 @@ router.get("/:id", async (req, res) => {
     }
 });
 
+router.get("/allUsers/all", async (req, res) => {
+    try {
+        // Obtener todos los usuarios de la base de datos
+        const usuarios = await Usuarios.findAll();
+
+        // Mapear los usuarios para obtener solo el ID y el nombre
+        const usuariosConNombre = usuarios.map((usuario) => {
+            return {
+                id: usuario.id,
+                uo: usuario.uo,
+            };
+        });
+
+        // Responder con la lista de usuarios y sus IDs
+        res.json(usuariosConNombre);
+    } catch (error) {
+        console.error("Error al obtener todos los usuarios:", error);
+        res.status(500).json({
+            error: "Error del servidor al obtener usuarios",
+        });
+    }
+});
+
 module.exports = router;

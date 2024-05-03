@@ -32,11 +32,30 @@ router.post("/addGrupos", async (req, res) => {
         // Insertar todos los grupos en la base de datos
         await Grupo.bulkCreate(grupos);
         console.log("Creando los siguientes Grupos: ", grupos);
-        // Devolver una respuesta exitosa
+        console.log("Grupos creados exitosamente");
         res.status(201).send("Grupos creados exitosamente");
     } catch (error) {
         console.error("Error al crear los grupos:", error);
         res.status(500).send("Error interno del servidor al crear los grupos");
+    }
+});
+
+router.get("/asignaturas/:asignaturaId/grupos", async (req, res) => {
+    const { asignaturaId } = req.params;
+
+    try {
+        // Buscar todos los grupos asociados a la asignatura especificada
+        const grupos = await Grupo.findAll({
+            where: {
+                AsignaturaId: asignaturaId,
+            },
+        });
+
+        // Devolver los grupos encontrados
+        res.json(grupos);
+    } catch (error) {
+        console.error("Error al buscar los grupos de la asignatura:", error);
+        res.status(500).json({ error: "Error interno del servidor" });
     }
 });
 

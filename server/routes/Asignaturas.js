@@ -32,10 +32,11 @@ router.post("/addAsignatura", async (req, res) => {
 });
 
 router.post("/addLoteAsignaturas", async (req, res) => {
-    const { asignaturas } = req.body;
+    const asignaturas = req.body;
     try {
         // Insertar todas las asignaturas en la base de datos en una sola operación
         await Asignaturas.bulkCreate(asignaturas);
+        console.log("Creando las siguientes Asignaturas: ", asignaturas);
         console.log("Asignaturas creadas exitosamente");
         res.status(200).send("Asignaturas creadas exitosamente");
     } catch (error) {
@@ -83,6 +84,29 @@ router.get("/:idAsignatura", async (req, res) => {
         // Si no se encuentra, devolver un mensaje indicando que no se encontró la asignatura
         if (asignatura) {
             res.json({ idAsignatura: asignatura.id });
+        } else {
+            res.status(404).json({ error: "Asignatura no encontrada" });
+        }
+    } catch (error) {
+        console.error("Error al buscar la asignatura:", error);
+        res.status(500).json({ error: "Error interno del servidor" });
+    }
+});
+
+router.get("/IdNumerico/:id", async (req, res) => {
+    const id = req.params.id;
+    try {
+        // Buscar en la base de datos la asignatura con el id proporcionado
+        const asignatura = await Asignaturas.findOne({
+            where: {
+                id: id,
+            },
+        });
+
+        // Si se encuentra la asignatura, devolver su ID
+        // Si no se encuentra, devolver un mensaje indicando que no se encontró la asignatura
+        if (asignatura) {
+            res.json(asignatura);
         } else {
             res.status(404).json({ error: "Asignatura no encontrada" });
         }

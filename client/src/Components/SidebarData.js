@@ -5,6 +5,7 @@ import { RiAdminFill, RiArrowDownSFill, RiArrowUpSFill } from "react-icons/ri";
 import { RiAdminLine } from "react-icons/ri";
 import { FaCalendarPlus } from "react-icons/fa6";
 import { AiOutlineGlobal } from "react-icons/ai";
+import { SiCachet } from "react-icons/si";
 
 export const SidebarData = ({ id }) => [
     {
@@ -22,6 +23,11 @@ export const SidebarData = ({ id }) => [
                 title: "Calendario Global",
                 icon: <AiOutlineGlobal />,
                 link: "/calendar/calendarioglobal",
+            },
+            {
+                title: "Matrícula",
+                icon: <SiCachet />,
+                link: "/matriculas/realizarmatricula",
             },
         ],
         visible: "true",
@@ -41,6 +47,11 @@ export const SidebarData = ({ id }) => [
                 title: "Gestionar calendarios",
                 icon: <FaCalendarPlus />,
                 link: "/admin/gestioncalendarios",
+            },
+            {
+                title: "Gestionar matrículas",
+                icon: <SiCachet />,
+                link: "/admin/gestionmatriculas",
             },
         ],
         visible: "false",

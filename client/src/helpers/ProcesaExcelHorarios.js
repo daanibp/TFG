@@ -19,6 +19,7 @@ export function ProcesaExcelHorarios(file, hojasAProcesar, callback, cuatri) {
             header: 1,
         });
 
+        // Función para obtener la fecha correspondiente a una semana y día de la semana específicos
         function obtenerFecha(numeroSemana, diaSemana) {
             return new Promise((resolve, reject) => {
                 const diaColumna = {
@@ -32,37 +33,32 @@ export function ProcesaExcelHorarios(file, hojasAProcesar, callback, cuatri) {
                 // Verificar si el día de la semana es válido
                 if (!diaColumna.hasOwnProperty(diaSemana)) {
                     reject("Día de la semana inválido");
+                    return;
                 }
 
-                try {
-                    // Buscar la fecha correspondiente en la tabla
-                    for (let i = 1; i < dataC.length; i++) {
-                        const row = dataC[i];
-                        if (parseInt(row[0]) === numeroSemana) {
-                            // Obtener la columna correspondiente al día de la semana
-                            const columna = diaColumna[diaSemana];
-                            // Verificar si hay una fecha en esa columna
-                            if (row[columna]) {
-                                const fechaNumeroSerie = row[columna];
-                                const fechaJavaScript =
-                                    XLSX.SSF.parse_date_code(fechaNumeroSerie); // Convertir el número de serie de fecha a fecha JavaScript
-                                resolve(fechaJavaScript); // Resuelve la promesa con la fecha encontrada
-                            } else {
-                                reject(
-                                    "FESTIVO: No hay fecha para el " +
-                                        diaSemana +
-                                        " de la semana especificado en la semana número " +
-                                        numeroSemana
-                                );
-                            }
+                // Buscar la fecha correspondiente en la tabla
+                for (let i = 1; i < dataC.length; i++) {
+                    const row = dataC[i];
+                    if (parseInt(row[0]) === numeroSemana) {
+                        // Obtener la columna correspondiente al día de la semana
+                        const columna = diaColumna[diaSemana];
+                        // Verificar si hay una fecha en esa columna
+                        if (row[columna]) {
+                            const fechaNumeroSerie = row[columna];
+                            const fechaJavaScript =
+                                XLSX.SSF.parse_date_code(fechaNumeroSerie);
+                            resolve(fechaJavaScript);
+                            return;
+                        } else {
+                            reject(
+                                `FESTIVO: No hay fecha para el ${diaSemana} de la semana especificado en la semana número ${numeroSemana}`
+                            );
+                            return;
                         }
                     }
-                    // Si no se encuentra la semana, rechaza la promesa
-                    reject("No se encontró la semana número " + numeroSemana);
-                } catch (error) {
-                    // Manejar el error sin propagarlo hacia arriba
-                    console.error("Error en obtenerFecha:", error);
                 }
+                // Si no se encuentra la semana, rechaza la promesa
+                reject(`No se encontró la semana número ${numeroSemana}`);
             });
         }
 
@@ -112,53 +108,35 @@ export function ProcesaExcelHorarios(file, hojasAProcesar, callback, cuatri) {
             return fechaLegible;
         }
 
-        // Variable para rastrear si estás en la última hoja
-        //let esUltimaHoja = false;
         // Iterar sobre las hojas especificadas
-        hojasAProcesar.forEach((hoja, hojaIndex) => {
+        hojasAProcesar.forEach((hoja) => {
             const sheet = workbook.Sheets[hoja];
             const data = XLSX.utils.sheet_to_json(sheet, { header: 1 });
 
-            // Obtener el número total de líneas a procesar
-            //const totalLineas = data.length - 3; // Descontamos las primeras 3 filas
-
-            // Llevar un seguimiento del número de líneas procesadas
-            //let lineasProcesadas = 0;
-
-            // Iterar sobre cada fila de datos a partir de la fila 4
             for (let rowIndex = 3; rowIndex < data.length; rowIndex++) {
                 const row = data[rowIndex];
-
-                // Verificar si es la última línea procesada
-                //const esUltimaLinea = rowIndex === totalLineas - 1;
 
                 if (!row[0]) {
                     continue;
                 }
 
-                // Iterar sobre las columnas correspondientes a cada día de la semana
                 for (let columnIndex = 0; columnIndex < 5; columnIndex++) {
                     const columnaInicio = 1 + columnIndex * 4;
-
-                    // Obtener la información relevante para el evento de este día de la semana
-                    console.log(row[columnaInicio]);
                     const asignatura = obtenerNombreAsignatura(
                         row[columnaInicio]
                     );
-                    //const lastLine =
                     const idNumerico = asignatura.idNumerico;
                     const id = asignatura.id;
                     const nombre = asignatura.nombre;
                     const abr = row[columnaInicio];
                     const aula = row[columnaInicio + 2];
                     const grupo = row[columnaInicio + 1] + "-" + abr;
-
-                    console.log(
-                        "Valor de las semanas: ",
-                        row[columnaInicio + 3]
-                    );
+                    const horaInicioFin = row[0];
+                    const horaComienzo = horaInicioFin.slice(0, 5) + ":00";
+                    const horaFinal = horaInicioFin.slice(6) + ":00";
 
                     let semanas = row[columnaInicio + 3];
+                    let processedWeeks = [];
 
                     if (typeof semanas !== "undefined") {
                         if (
@@ -186,120 +164,54 @@ export function ProcesaExcelHorarios(file, hojasAProcesar, callback, cuatri) {
                     } else {
                         semanas = [];
                     }
-                    console.log("Semanas:", semanas, typeof semanas);
 
-                    const horaInicioFin = row[0];
-                    const horaComienzo = horaInicioFin.slice(0, 5) + ":00"; // Extraer y agregar ":00" al final
-                    const horaFinal = horaInicioFin.slice(6) + ":00"; // Extraer y agregar ":00" al final
+                    semanas.forEach((semana) => {
+                        processedWeeks.push(
+                            obtenerFecha(
+                                semana,
+                                devuelveDiaSemana(columnaInicio)
+                            )
+                                .then((fecha) => {
+                                    const fechaLegible =
+                                        obtenerFechaLegible(fecha);
+                                    return {
+                                        idNumerico,
+                                        id,
+                                        nombre,
+                                        abr,
+                                        aula,
+                                        grupo,
+                                        horaComienzo,
+                                        horaFinal,
+                                        fecha: fechaLegible,
+                                    };
+                                })
+                                .catch((error) => {
+                                    console.error(
+                                        "Error obteniendo fecha:",
+                                        error
+                                    );
+                                    console.log(
+                                        "Datos: (" + nombre,
+                                        aula,
+                                        grupo + ")"
+                                    );
+                                    return null;
+                                })
+                        );
+                    });
 
-                    // Crear un evento para cada fecha de cada semana
-                    if (typeof semanas !== "string") {
-                        // Crear un array de promesas para cada fecha de cada semana
-                        const promises = semanas.map((semana) => {
-                            return new Promise((resolve, reject) => {
-                                obtenerFecha(
-                                    semana,
-                                    devuelveDiaSemana(columnaInicio)
-                                )
-                                    .then((fecha) => {
-                                        const fechaLegible =
-                                            obtenerFechaLegible(fecha);
-                                        resolve({
-                                            idNumerico,
-                                            id,
-                                            nombre,
-                                            abr,
-                                            aula,
-                                            grupo,
-                                            horaComienzo,
-                                            horaFinal,
-                                            fecha: fechaLegible,
-                                        });
-                                    })
-                                    .catch((error) => {
-                                        console.error(
-                                            "Error obteniendo fecha:",
-                                            error
-                                        );
-                                        console.log(
-                                            "Datos: (" + nombre,
-                                            aula,
-                                            grupo + ")"
-                                        );
-                                        reject(error);
-                                    });
-                            });
+                    Promise.all(processedWeeks).then((results) => {
+                        results.forEach((result) => {
+                            if (result !== null) {
+                                callback(result);
+                            }
                         });
-
-                        // Esperar a que todas las promesas se resuelvan
-                        Promise.all(promises)
-                            .then((results) => {
-                                // Llamar a la función de devolución de llamada para procesar los eventos
-                                results.forEach((result) => {
-                                    if (result !== null) {
-                                        callback(result);
-                                    }
-                                });
-                            })
-                            .catch((error) => {
-                                console.error("Error obteniendo fecha:", error);
-                                console.log(
-                                    "Datos: (" + nombre,
-                                    aula,
-                                    grupo + ")"
-                                );
-                            });
-                    }
+                    });
                 }
             }
-            // Verificar si es la última hoja
-            /*const esUltimaHojaActual = hojaIndex === hojasAProcesar.length - 1;
-            if (esUltimaHojaActual) {
-                esUltimaHoja = true;
-            }*/
         });
     };
 
     reader.readAsBinaryString(file);
 }
-
-/*export function CargarAsignaturas(file, callback) {
-    const reader = new FileReader();
-
-    reader.onload = async (event) => {
-        const binaryString = event.target.result;
-        const workbook = XLSX.read(binaryString, { type: "binary" });
-
-        // Obtener los datos de la hoja "Asignaturas"
-        const sheetAsignaturas = workbook.Sheets["Asignaturas"];
-        const dataAsignaturas = obtenerDatosDesdeFila(sheetAsignaturas, 3);
-
-        // Llamar a la función de devolución de llamada con los datos obtenidos
-        callback(dataAsignaturas);
-    };
-    reader.readAsBinaryString(file);
-}
-
-function obtenerUltimaParte(string, separador) {
-    const partes = string.split(separador);
-    return partes[partes.length - 1];
-}
-
-function obtenerDatosDesdeFila(sheet, filaInicio) {
-    const data = XLSX.utils.sheet_to_json(sheet, { header: 1 });
-
-    const datos = [];
-    for (let rowIndex = filaInicio - 1; rowIndex < data.length; rowIndex++) {
-        const row = data[rowIndex];
-        // Verificar si la fila tiene al menos dos columnas
-        if (row.length >= 2) {
-            // Guardar los valores de la primera y segunda columna
-            datos.push({
-                id: row[0],
-                abr: obtenerUltimaParte(row[0], "-"),
-                nombreReal: row[2],
-            });
-        }
-    }
-    return datos;
-}*/

@@ -13,29 +13,26 @@ function GestionCalendarios() {
     const [usuarioSolicitante, setUsuarioSolicitante] = useState(null);
     const [filtroEstado, setFiltroEstado] = useState("Todos");
 
+    // Variable para almacenar los datos de línea procesados
+    const lineasProcesadas = [];
+
     const [asignaturas, setAsignaturas] = useState([]);
     const [grupos, setGrupos] = useState([]);
+
+    // Eventos a añadir en la BBDD
+    const [usuarios, setUsuarios] = useState([]);
+    const [eventos, setEventos] = useState([]);
 
     const [selectedScheduleFile, setSelectedScheduleFile] = useState(null);
     const [selectedExamFile, setSelectedExamFile] = useState(null);
 
-    let gruposAux = [];
-
-    // Función para obtener el ID de la asignatura
-    const obtenerIdAsignatura = async (idAsignatura) => {
-        try {
-            const response = await axios.get(
-                `http://localhost:5001/asignaturas/${idAsignatura}`
-            );
-            // Devuelve el ID de la asignatura si se encuentra en la base de datos
-            return response.data.idAsignatura;
-        } catch (error) {
-            console.error("Error al obtener el ID de la asignatura:", error);
-            return null;
-        }
-    };
-
     useEffect(() => {
+        axios
+            .get(`http://localhost:5001/usuarios/allUsers/all`)
+            .then((response) => {
+                console.log("Usuarios: ", response.data);
+                setUsuarios(response.data);
+            });
         axios.get(`http://localhost:5001/solicitudEventos`).then((response) => {
             console.log("Solicitudes: ", response.data);
             setSolicitudes(response.data);
@@ -161,7 +158,8 @@ function GestionCalendarios() {
                         async (lineData) => {
                             try {
                                 await handleAsignaturaProcessed(lineData);
-                                handleGrupoProcessed(lineData);
+                                //handleGrupoProcessed(lineData);
+                                //await handleLineProcessed();
                                 resolve();
                             } catch (error) {
                                 reject(error);
@@ -170,7 +168,6 @@ function GestionCalendarios() {
                         cuatri
                     );
                 });
-
                 // Resolver la promesa después de procesar el archivo
                 resolve();
             } catch (error) {
@@ -185,7 +182,6 @@ function GestionCalendarios() {
     const handleExamFileUpload = () => {
         if (selectedExamFile) {
             console.log("Archivo de exámenes seleccionado:", selectedExamFile);
-            // Enviar el archivo al servidor para su procesamiento
         } else {
             alert(
                 "Por favor selecciona un archivo de exámenes antes de subirlo."
@@ -220,8 +216,25 @@ function GestionCalendarios() {
         return solicitud.estado === filtroEstado;
     });
 
+    const AgregarAsignaturas = async (asignaturas) => {
+        console.log("Asignaturas antes de su agregación: ", asignaturas);
+        try {
+            await axios.post(
+                "http://localhost:5001/asignaturas/addLoteAsignaturas",
+                asignaturas
+            );
+            console.log("Las asignaturas se han agregado correctamente.");
+        } catch (error) {
+            console.error("Error al agregar asignaturas:", error);
+        }
+    };
+
     const AgregarGrupos = async (grupos) => {
-        console.log("Grupossss: ", grupos);
+        // Aquí ya tenemos las asignaturas y los grupos creado y en local
+        // Recorro los usuarios de mi base de datos
+        // Para cada usuario que esté matriculado en la asignatura del array asignaturas y pertenezca al grupo de esa asignatura
+
+        console.log("Grupos antes de su agregación: ", grupos);
         try {
             await axios.post("http://localhost:5001/grupos/addGrupos", grupos);
             console.log("Los grupos se han agregado correctamente.");
@@ -230,33 +243,75 @@ function GestionCalendarios() {
         }
     };
 
-    // Función para manejar los resultados del procesamiento de una línea del archivo Excel
-    const handleLineProcessed = async (lineData) => {
-        console.log("Datos de la línea procesada:", lineData);
-        // CREAR EL EVENTO CON LOS DATOS PROCESADOS
-        // para cada usuario que tenga lineData.Asignatura y pertenezca al grupo lineData.grupo se crea el evento
+    const AgregarEventos = async (eventos) => {
+        console.log("Eventos antes de su agregación: ", eventos);
+        try {
+            await axios.post(
+                "http://localhost:5001/eventos/addLoteEventos",
+                eventos
+            );
+            console.log("Los eventos se han agregado correctamente.");
+        } catch (error) {
+            console.error("Error al agregar eventos:", error);
+        }
+    };
 
-        // Crear las asignaturas si no están creadas
-        await handleAsignaturaProcessed(lineData);
-        // Crear los grupos para cada asignatura si no están creados
-        await handleGrupoProcessed(lineData);
-        // Añado grupos a la BBDD
-        //await axios.post("http://localhost:5001/grupos/addGrupos", grupos);
+    // Crea el evento a partir de los datos de la línea procesada
+    const crearEvento = async (lineaProcesada, id) => {
+        try {
+            // Verificar si los datos necesarios están presentes en la línea procesada
+            if (
+                !lineaProcesada.nombre ||
+                !lineaProcesada.fecha ||
+                !lineaProcesada.horaComienzo ||
+                !lineaProcesada.horaFinal ||
+                !lineaProcesada.grupo ||
+                !lineaProcesada.aula
+            ) {
+                throw new Error(
+                    "Faltan datos en la línea procesada para crear el evento"
+                );
+            }
+            // Utiliza los datos de la línea procesada para crear un nuevo evento
+            const nuevoEvento = {
+                asunto: lineaProcesada.nombre,
+                fechaDeComienzo: lineaProcesada.fecha,
+                comienzo: lineaProcesada.horaComienzo,
+                fechaDeFinalización: lineaProcesada.fecha,
+                finalización: lineaProcesada.horaFinal,
+                todoElDía: false,
+                reminder: false,
+                reminderDate: null,
+                reminderTime: null,
+                meetingOrganizer: "Uniovi",
+                description: lineaProcesada.grupo + " - " + lineaProcesada.aula,
+                location: lineaProcesada.aula,
+                priority: "Normal",
+                private: false,
+                sensitivity: "Normal",
+                showTimeAs: 2,
+                examen: false,
+                UsuarioId: id,
+            };
 
-        // Tras tener la asignatura y grupo chequeado de esta línea => se crea el evento
-
-        // Recorremos los usuarios
-        // Miramos si este usuario está matriculado en lineData.Asignatura y pertenece a lineData.grupo
-        // Creamos el evento
+            // Responder con el evento recién creado
+            return nuevoEvento;
+        } catch (error) {
+            // Manejar errores si ocurre alguno durante la creación del evento
+            console.error("Error al crear el evento:", error.message);
+            throw new Error("Error al crear el evento");
+        }
     };
 
     // Función para cargar las asignaturas en la BBDD si no lo están
     const handleAsignaturaProcessed = async (lineData) => {
         // Verificar si ya existe una asignatura con el mismo id en la base de datos
-        console.log("Datos de la línea procesada:", lineData);
+        //console.log("Datos de la línea procesada:", lineData);
         const asignaturaExistente = asignaturas.find(
             (asignatura) => asignatura.idAsignatura === lineData.id
         );
+
+        lineasProcesadas.push(lineData);
 
         if (asignaturaExistente) {
             console.log(
@@ -282,111 +337,67 @@ function GestionCalendarios() {
             console.log("Nueva Asignatura: ", nuevaAsignatura);
             // Agregar la nueva asignatura al array de asignaturas
             asignaturas.push(nuevaAsignatura);
-            // Añadirla a la base de datos
-            await axios.post(
-                "http://localhost:5001/asignaturas/addAsignatura",
-                nuevaAsignatura
-            );
         }
     };
 
-    // Función para manejar la información de los grupos
-    /*const handleGrupoProcessed = async (lineData) => {
+    // Función para manejar el procesamiento de un grupo
+    const handleGrupoProcessed = async () => {
+        console.log(
+            "Lineas Procesadas: ",
+            lineasProcesadas,
+            lineasProcesadas.length
+        );
         try {
-            // Obtener el ID de la asignatura asociada al grupo
-            const idAsignatura = await obtenerIdAsignatura(lineData.id);
-            console.log("ID Asignatura: ", idAsignatura);
+            // Procesar los grupos para todas las líneas almacenadas
+            for (const lineData of lineasProcesadas) {
+                // Manejar el grupo con los datos de la línea
+                // handleGrupoProcessed(lineData);
+                // Buscar la asignatura necesaria en la lista de asignaturas
+                const asignatura = asignaturas.find(
+                    (asignatura) => asignatura.idAsignatura === lineData.id
+                );
+                console.log(asignatura);
 
-            // Verificar si ya existe un grupo con el mismo nombre en la base de datos
-            const grupoExistente = grupos.find(
-                (grupo) => grupo.nombre === lineData.grupo
-            );
-            if (!grupoExistente) {
-                console.log(
-                    "El grupo " +
-                        lineData.grupo +
-                        " no existe en la base de datos."
-                );
-                // Crear un nuevo objeto de grupo
-                const nuevoGrupo = {
-                    nombre: lineData.grupo,
-                    tipo: getTipoGrupo(lineData.grupo),
-                    AsignaturaId: idAsignatura,
-                };
-                console.log("Nuevo Grupo: ", nuevoGrupo);
-                grupos.push(nuevoGrupo);
-                // Añadir a la BBDD
-                /*await axios.post(
-                    "http://localhost:5001/grupos/addGrupo",
-                    nuevoGrupo
-                );
-                // Actualizar la lista de grupos después de la creación del nuevo grupo
-                const response = await axios.get(
-                    "http://localhost:5001/grupos"
-                );
-                setGrupos(response.data);
-                
-            } else {
-                console.log(
-                    "El grupo " +
-                        lineData.grupo +
-                        " ya existe en la base de datos."
-                );
-            }
-        } catch (error) {
-            console.error("Error en el procesamiento de grupos:", error);
-        }
-    };*/
+                let idAsignatura = 0;
+                if (asignatura) {
+                    // Obtener el ID de la asignatura
+                    idAsignatura = asignatura.id;
+                    console.log("ID asignatura: ", idAsignatura);
+                } else {
+                    console.error("No se encontró la asignatura:", lineData.id);
+                }
 
-    const handleGrupoProcessed = (lineData) => {
-        try {
-            // Buscar la asignatura necesaria en la lista de asignaturas
-            const asignatura = asignaturas.find(
-                (asignatura) => asignatura.idAsignatura === lineData.id
-            );
-
-            console.log(asignatura);
-
-            let idAsignatura = 0;
-            if (asignatura) {
-                // Obtener el ID de la asignatura
-                idAsignatura = asignatura.id;
-                console.log("ID asignatura: ", idAsignatura);
-            } else {
-                console.error("No se encontró la asignatura:", lineData.id);
-            }
-
-            const grupoExistente = grupos.find(
-                (grupo) => grupo.nombre === lineData.grupo
-            );
-            if (!grupoExistente) {
-                console.log(
-                    "El grupo " +
-                        lineData.grupo +
-                        " no existe en la base de datos."
+                const grupoExistente = grupos.find(
+                    (grupo) => grupo.nombre === lineData.grupo
                 );
-                // Crear un nuevo objeto de grupo
-                const nuevoGrupo = {
-                    nombre: lineData.grupo,
-                    tipo: getTipoGrupo(lineData.grupo),
-                    AsignaturaId: idAsignatura,
-                };
-                console.log("Nuevo Grupo: ", nuevoGrupo);
-                grupos.push(nuevoGrupo);
-                gruposAux = [...gruposAux, gruposAux];
-                /*const nuevosGrupos = [...grupos, nuevoGrupo];
-                setGrupos(nuevosGrupos); // Actualizar el estado con la nueva copia*/
-                console.log(
-                    "Actualizacion grupos numero: ",
-                    grupos.length,
-                    grupos
-                );
-            } else {
-                console.log(
-                    "El grupo " +
-                        lineData.grupo +
-                        " ya existe en la base de datos."
-                );
+                if (!grupoExistente) {
+                    console.log(
+                        "El grupo " +
+                            lineData.grupo +
+                            " no existe en la base de datos."
+                    );
+                    // Crear un nuevo objeto de grupo
+                    const nuevoGrupo = {
+                        nombre: lineData.grupo,
+                        tipo: getTipoGrupo(lineData.grupo),
+                        AsignaturaId: idAsignatura,
+                    };
+                    console.log("Nuevo Grupo: ", nuevoGrupo);
+                    grupos.push(nuevoGrupo);
+                    //const nuevosGrupos = [...grupos, nuevoGrupo];
+                    //setGrupos(nuevosGrupos); // Actualizar el estado con la nueva copia
+                    console.log(
+                        "Actualizacion grupos numero: ",
+                        grupos.length,
+                        grupos
+                    );
+                } else {
+                    console.log(
+                        "El grupo " +
+                            lineData.grupo +
+                            " ya existe en la base de datos."
+                    );
+                }
             }
         } catch (error) {
             console.error("Error al procesar los grupos:", error);
@@ -452,7 +463,18 @@ function GestionCalendarios() {
                                         onClick={() =>
                                             handleScheduleFileUpload()
                                                 .then(() => {
+                                                    AgregarAsignaturas(
+                                                        asignaturas
+                                                    );
+                                                })
+                                                .then(() => {
+                                                    handleGrupoProcessed();
+                                                })
+                                                .then(() => {
                                                     AgregarGrupos(grupos);
+                                                })
+                                                .then(() => {
+                                                    AgregarEventos(eventos);
                                                 })
                                                 .catch((error) => {
                                                     console.error(

@@ -12,6 +12,8 @@ import CalendarioGlobal from "./pages/CalendarioGlobal";
 import LoadingIndicator from "./Components/LoadingIndicator";
 import AdminRegistration from "./pages/AdminRegistration";
 import GestionCalendarios from "./pages/GestionCalendarios";
+import GestionMatriculas from "./pages/GestionMatriculas";
+import RealizarMatricula from "./pages/RealizarMatricula";
 
 function App() {
     const [authState, setAuthState] = useState({
@@ -108,12 +110,20 @@ function App() {
                             element={<CalendarioGlobal />}
                         />
                         <Route
+                            path="/matriculas/realizarmatricula"
+                            element={<RealizarMatricula />}
+                        />
+                        <Route
                             path="/admin/crearadmin"
                             element={<AdminRegistration />}
                         />
                         <Route
                             path="/admin/gestioncalendarios"
                             element={<GestionCalendarios />}
+                        />
+                        <Route
+                            path="/admin/gestionmatriculas"
+                            element={<GestionMatriculas />}
                         />
                         <Route path="*" element={<PageNotFound />} />
                     </Routes>
