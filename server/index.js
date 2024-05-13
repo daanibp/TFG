@@ -7,6 +7,9 @@ app.use(cors());
 
 const db = require("./models");
 
+const bodyParser = require("body-parser");
+app.use(bodyParser.json({ limit: "10000mb" }));
+
 // Routers
 const usuariosRouter = require("./routes/Usuarios");
 app.use("/usuarios", usuariosRouter);

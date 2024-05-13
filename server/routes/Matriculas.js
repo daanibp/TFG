@@ -3,6 +3,7 @@ const router = express.Router();
 const { Matriculas } = require("../models");
 const { validateToken } = require("../middlewares/AuthMiddleware");
 const { Op } = require("sequelize");
+const { Grupo } = require("../models");
 
 router.get("/", async (req, res) => {
     try {
@@ -177,6 +178,32 @@ router.get("/checkMatriculada", async (req, res) => {
             error
         );
         res.status(500).json({ error: "Error interno del servidor" });
+    }
+});
+
+router.get("/matriculasConGrupo", async (req, res) => {
+    try {
+        // Obtener todas las matrículas y sus correspondientes grupos
+        const matriculasConGrupo = await Matriculas.findAll({
+            include: {
+                model: Grupo, // Asociación con el modelo de Grupos
+                attributes: ["nombre"], // Obtener solo el nombre del grupo
+            },
+        });
+
+        // Mapear los resultados para obtener la estructura deseada
+        const resultado = matriculasConGrupo.map((matricula) => ({
+            MatriculaId: matricula.id,
+            UsuarioId: matricula.UsuarioId,
+            AsignaturaId: matricula.AsignaturaId,
+            GrupoId: matricula.GrupoId,
+            GrupoNombre: matricula.Grupo.nombre, // Acceder al nombre del grupo
+        }));
+
+        res.json(resultado);
+    } catch (error) {
+        console.error("Error al buscar matrículas con grupo:", error);
+        res.status(500).json({ error: "Error al buscar matrículas con grupo" });
     }
 });
 

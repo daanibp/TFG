@@ -2,6 +2,20 @@ const express = require("express");
 const router = express.Router();
 const { Eventos } = require("../models");
 const { validateToken } = require("../middlewares/AuthMiddleware");
+const moment = require("moment");
+
+router.get("/clases", async (req, res) => {
+    const eventos = await Eventos.findAll({
+        where: { examen: false },
+    });
+    res.json(eventos);
+});
+router.get("/examenes", async (req, res) => {
+    const eventos = await Eventos.findAll({
+        where: { examen: true },
+    });
+    res.json(eventos);
+});
 
 router.get("/:usuarioId", async (req, res) => {
     const usuarioId = req.params.usuarioId;
@@ -99,29 +113,80 @@ router.delete("/delete/:eventoId", async (req, res) => {
 
 router.post("/addLoteEventos", async (req, res) => {
     try {
-        const eventos = req.body; // Array de eventos
+        const nuevosEventos = req.body; // Array de eventos nuevos
+        // console.log("Nuevos Eventos", nuevosEventos);
 
-        // Contador para llevar el registro de los eventos agregados
+        // Verificar si hay eventos en la base de datos
+        const eventosEnBD = await Eventos.findAll();
         let eventosAgregados = 0;
 
-        // Iterar sobre cada evento en el array
-        for (const evento of eventos) {
-            // Verificar si el evento ya existe en la base de datos
-            const eventoExistente = await Eventos.findOne({
-                where: { id: evento.id },
-            });
+        // Si no hay eventos en la base de datos, crear todos los eventos nuevos
+        if (eventosEnBD.length === 0) {
+            await Eventos.bulkCreate(nuevosEventos);
+            eventosAgregados = nuevosEventos.length;
+        } else {
+            // Iterar sobre cada evento nuevo
+            for (const nuevoEvento of nuevosEventos) {
+                // Convertir las fechas de los nuevos eventos al formato Date
+                nuevoEvento.fechaDeComienzo = new Date(
+                    nuevoEvento.fechaDeComienzo
+                );
+                nuevoEvento.fechaDeFinalización = new Date(
+                    nuevoEvento.fechaDeFinalización
+                );
 
-            // Si el evento no existe, agregarlo a la base de datos
-            if (!eventoExistente) {
-                await Eventos.create(evento);
-                eventosAgregados++;
+                // Verificar si el evento nuevo ya existe en la base de datos
+                const eventoExistente = eventosEnBD.find((evento) => {
+                    // Convertir las fechas de la base de datos al formato Date
+                    const fechaFormateadaBD = new Date(evento.fechaDeComienzo);
+
+                    return (
+                        evento.asunto === nuevoEvento.asunto &&
+                        fechaFormateadaBD.getTime() ===
+                            nuevoEvento.fechaDeComienzo.getTime() &&
+                        evento.comienzo === nuevoEvento.comienzo &&
+                        fechaFormateadaBD.getTime() ===
+                            nuevoEvento.fechaDeFinalización.getTime() &&
+                        evento.finalización === nuevoEvento.finalización &&
+                        evento.todoElDía === nuevoEvento.todoElDía &&
+                        evento.reminder === nuevoEvento.reminder &&
+                        evento.reminderDate === nuevoEvento.reminderDate &&
+                        evento.reminderTime === nuevoEvento.reminderTime &&
+                        evento.meetingOrganizer ===
+                            nuevoEvento.meetingOrganizer &&
+                        evento.description === nuevoEvento.description &&
+                        evento.location === nuevoEvento.location &&
+                        evento.priority === nuevoEvento.priority &&
+                        evento.private === nuevoEvento.private &&
+                        evento.sensitivity === nuevoEvento.sensitivity &&
+                        evento.showTimeAs ===
+                            nuevoEvento.showTimeAs.toString() &&
+                        evento.examen === nuevoEvento.examen &&
+                        evento.UsuarioId === nuevoEvento.UsuarioId
+                    );
+                });
+
+                // Si el evento no existe, agregarlo a la base de datos
+                if (!eventoExistente) {
+                    await Eventos.create(nuevoEvento);
+                    eventosAgregados++;
+                }
             }
         }
 
-        // Responder con un mensaje indicando cuántos eventos se agregaron correctamente
-        res.json({
-            message: `Se agregaron ${eventosAgregados} eventos correctamente.`,
-        });
+        if (eventosAgregados === 0) {
+            console.log(`No se agregó ningún evento`);
+            res.json({
+                message: `No se agregó ningún evento`,
+            });
+        } else {
+            console.log(
+                `Se agregaron ${eventosAgregados} eventos correctamente.`
+            );
+            res.json({
+                message: `Se agregaron ${eventosAgregados} eventos correctamente.`,
+            });
+        }
     } catch (error) {
         console.error("Error al agregar eventos:", error.message);
         res.status(500).json({ message: "Error interno del servidor" });

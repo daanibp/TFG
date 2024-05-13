@@ -4,6 +4,9 @@ import { AuthContext } from "../helpers/AuthContext";
 import Sidebar from "../Components/Sidebar";
 import "../estilos/GestionCalendarios.css";
 import { ProcesaExcelHorarios } from "../helpers/ProcesaExcelHorarios";
+import { ProcesaExcelExamenes } from "../helpers/ProcesaExcelExamenes";
+
+const moment = require("moment");
 
 function GestionCalendarios() {
     const { authState } = useContext(AuthContext);
@@ -22,6 +25,13 @@ function GestionCalendarios() {
     // Eventos a añadir en la BBDD
     const [usuarios, setUsuarios] = useState([]);
     const [eventos, setEventos] = useState([]);
+
+    // Examenes
+    const [examenes, setExamenes] = useState([]);
+    const [eventosExamenes, setEventosExamenes] = useState([]);
+
+    // Matriculas
+    const [matriculasConGrupo, setMatriculasConGrupo] = useState([]);
 
     const [selectedScheduleFile, setSelectedScheduleFile] = useState(null);
     const [selectedExamFile, setSelectedExamFile] = useState(null);
@@ -45,6 +55,20 @@ function GestionCalendarios() {
             console.log("Grupos: ", response.data);
             setGrupos(response.data);
         });
+        // axios.get(`http://localhost:5001/eventos/clases`).then((response) => {
+        //     console.log("Eventos: ", response.data);
+        //     setEventos(response.data);
+        // });
+        // axios.get(`http://localhost:5001/eventos/examenes`).then((response) => {
+        //     console.log("Examenes: ", response.data);
+        //     setEventosExamenes(response.data);
+        // });
+        axios
+            .get(`http://localhost:5001/matriculas/matriculasConGrupo`)
+            .then((response) => {
+                console.log("Matriculas: ", response.data);
+                setMatriculasConGrupo(response.data);
+            });
     }, []);
 
     const showSolicitudDetails = (solicitud) => {
@@ -125,63 +149,70 @@ function GestionCalendarios() {
     }
 
     const handleScheduleFileUpload = async () => {
-        return new Promise(async (resolve, reject) => {
-            if (!selectedScheduleFile) {
-                reject(new Error("No se seleccionó ningún archivo."));
-                return;
-            }
+        if (selectedScheduleFile) {
+            return new Promise(async (resolve, reject) => {
+                if (!selectedScheduleFile) {
+                    reject(new Error("No se seleccionó ningún archivo."));
+                    return;
+                }
 
-            console.log(
-                "Archivo de horarios de clases seleccionado:",
-                selectedScheduleFile
+                console.log(
+                    "Archivo de horarios de clases seleccionado:",
+                    selectedScheduleFile
+                );
+
+                // Obtener el nombre del archivo
+                const nombreArchivo = selectedScheduleFile.name;
+
+                try {
+                    // Determinar el cuatrimestre basado en el nombre del archivo
+                    const cuatri = determinarCuatrimestre(nombreArchivo);
+
+                    // Procesar el archivo de horarios de clases
+                    await new Promise((resolve, reject) => {
+                        ProcesaExcelHorarios(
+                            selectedScheduleFile,
+                            [
+                                "1ITIN_A",
+                                "1ITIN_B",
+                                "2ITIN_A",
+                                "2ITIN_ING",
+                                "3ITIN_A",
+                                "4ITIN_A",
+                            ],
+                            async (lineData) => {
+                                try {
+                                    await handleAsignaturaProcessed(lineData);
+                                    //handleGrupoProcessed(lineData);
+                                    //await handleLineProcessed();
+                                    resolve();
+                                } catch (error) {
+                                    reject(error);
+                                }
+                            },
+                            cuatri
+                        );
+                    });
+                    // Resolver la promesa después de procesar el archivo
+                    resolve();
+                } catch (error) {
+                    // Si ocurre un error, rechazar la promesa
+                    console.error("Error:", error.message);
+                    reject(error);
+                }
+            });
+        } else {
+            alert(
+                "Por favor selecciona un archivo de horarios antes de subirlo."
             );
-
-            // Obtener el nombre del archivo
-            const nombreArchivo = selectedScheduleFile.name;
-
-            try {
-                // Determinar el cuatrimestre basado en el nombre del archivo
-                const cuatri = determinarCuatrimestre(nombreArchivo);
-
-                // Procesar el archivo de horarios de clases
-                await new Promise((resolve, reject) => {
-                    ProcesaExcelHorarios(
-                        selectedScheduleFile,
-                        [
-                            "1ITIN_A",
-                            "1ITIN_B",
-                            "2ITIN_A",
-                            "2ITIN_ING",
-                            "3ITIN_A",
-                            "4ITIN_A",
-                        ],
-                        async (lineData) => {
-                            try {
-                                await handleAsignaturaProcessed(lineData);
-                                //handleGrupoProcessed(lineData);
-                                //await handleLineProcessed();
-                                resolve();
-                            } catch (error) {
-                                reject(error);
-                            }
-                        },
-                        cuatri
-                    );
-                });
-                // Resolver la promesa después de procesar el archivo
-                resolve();
-            } catch (error) {
-                // Si ocurre un error, rechazar la promesa
-                console.error("Error:", error.message);
-                reject(error);
-            }
-        });
+        }
     };
 
     // Función para manejar la subida del archivo de exámenes
     const handleExamFileUpload = () => {
         if (selectedExamFile) {
             console.log("Archivo de exámenes seleccionado:", selectedExamFile);
+            setExamenes(ProcesaExcelExamenes(selectedExamFile, ["GIITIN01"]));
         } else {
             alert(
                 "Por favor selecciona un archivo de exámenes antes de subirlo."
@@ -246,15 +277,29 @@ function GestionCalendarios() {
     const AgregarEventos = async (eventos) => {
         console.log("Eventos antes de su agregación: ", eventos);
         try {
-            await axios.post(
-                "http://localhost:5001/eventos/addLoteEventos",
-                eventos
-            );
-            console.log("Los eventos se han agregado correctamente.");
+            // Dividir los eventos en lotes de 100 eventos cada uno
+            for (let i = 0; i < eventos.length; i += 100) {
+                const loteEventos = eventos.slice(i, i + 100);
+
+                // Enviar el lote de eventos actual
+                await axios.post(
+                    "http://localhost:5001/eventos/addLoteEventos",
+                    loteEventos
+                );
+
+                console.log(`Se han agregado ${loteEventos.length} eventos.`);
+            }
+            console.log("Todos los eventos se han agregado correctamente.");
         } catch (error) {
             console.error("Error al agregar eventos:", error);
         }
     };
+
+    // Función para formatear la fecha al formato deseado con zona horaria
+    function formatearFecha(fecha) {
+        // Parsear la fecha usando Moment.js y formatearla en el formato deseado con zona horaria
+        return moment(fecha, "DD/MM/YYYY").format("YYYY-MM-DD");
+    }
 
     // Crea el evento a partir de los datos de la línea procesada
     const crearEvento = async (lineaProcesada, id) => {
@@ -275,14 +320,14 @@ function GestionCalendarios() {
             // Utiliza los datos de la línea procesada para crear un nuevo evento
             const nuevoEvento = {
                 asunto: lineaProcesada.nombre,
-                fechaDeComienzo: lineaProcesada.fecha,
+                fechaDeComienzo: formatearFecha(lineaProcesada.fecha),
                 comienzo: lineaProcesada.horaComienzo,
-                fechaDeFinalización: lineaProcesada.fecha,
+                fechaDeFinalización: formatearFecha(lineaProcesada.fecha),
                 finalización: lineaProcesada.horaFinal,
                 todoElDía: false,
                 reminder: false,
                 reminderDate: null,
-                reminderTime: null,
+                reminderTime: "10:00:00",
                 meetingOrganizer: "Uniovi",
                 description: lineaProcesada.grupo + " - " + lineaProcesada.aula,
                 location: lineaProcesada.aula,
@@ -293,13 +338,51 @@ function GestionCalendarios() {
                 examen: false,
                 UsuarioId: id,
             };
-
-            // Responder con el evento recién creado
-            return nuevoEvento;
+            console.log("Nuevo Evento: ", nuevoEvento);
+            eventos.push(nuevoEvento);
         } catch (error) {
-            // Manejar errores si ocurre alguno durante la creación del evento
             console.error("Error al crear el evento:", error.message);
             throw new Error("Error al crear el evento");
+        }
+    };
+
+    // Crea el evento a partir de los datos de los examenes
+    const crearEventosExamen = async (examenes, id) => {
+        console.log("Exámenes antes de crear los eventos:", examenes);
+        try {
+            // Iterar sobre cada examen
+            examenes.forEach(async (examen) => {
+                // Crear el evento con los datos del examen
+                const nuevoEvento = {
+                    asunto: "EX " + examen.asignatura,
+                    fechaDeComienzo: examen.fecha,
+                    comienzo: examen.hora,
+                    fechaDeFinalización: examen.fecha,
+                    finalización: examen.hora,
+                    todoElDía: false,
+                    reminder: false,
+                    reminderDate: null,
+                    reminderTime: null,
+                    meetingOrganizer: "Uniovi",
+                    description: examen.aulas,
+                    location: examen.aulas,
+                    priority: "Normal",
+                    private: false,
+                    sensitivity: "Normal",
+                    showTimeAs: 2,
+                    examen: true,
+                    UsuarioId: id,
+                };
+
+                console.log("Nuevo Evento: ", nuevoEvento);
+                eventosExamenes.push(nuevoEvento);
+            });
+        } catch (error) {
+            console.error(
+                "Error al crear eventos desde exámenes:",
+                error.message
+            );
+            throw new Error("Error al crear eventos desde exámenes");
         }
     };
 
@@ -342,6 +425,9 @@ function GestionCalendarios() {
 
     // Función para manejar el procesamiento de un grupo
     const handleGrupoProcessed = async () => {
+        console.log(
+            "--------------------- EMPIEZA HANDLE GRUPO ---------------------"
+        );
         console.log(
             "Lineas Procesadas: ",
             lineasProcesadas,
@@ -424,6 +510,55 @@ function GestionCalendarios() {
         }
     };
 
+    const handleEventos = async () => {
+        console.log(
+            "--------------------- EMPIEZA HANDLE EVENTOS ---------------------"
+        );
+        try {
+            // Verificar si hay matrículas con grupos en el array
+            if (!matriculasConGrupo || matriculasConGrupo.length === 0) {
+                throw new Error(
+                    "No hay matrículas con grupos para manejar eventos"
+                );
+            }
+
+            // Iterar sobre cada línea procesada
+            lineasProcesadas.forEach((lineaProcesada) => {
+                // Verificar si la asignatura y el grupo de la línea procesada están en las matrículas
+                const matriculaEncontrada = matriculasConGrupo.find(
+                    (matricula) => {
+                        return (
+                            matricula.AsignaturaId ===
+                                lineaProcesada.idNumerico &&
+                            matricula.GrupoNombre === lineaProcesada.grupo
+                        );
+                    }
+                );
+
+                if (matriculaEncontrada) {
+                    // Si la matrícula se encontró, obtener el usuarioId y crear el evento
+                    const usuarioId = matriculaEncontrada.UsuarioId;
+                    crearEvento(lineaProcesada, usuarioId);
+                    console.log(
+                        "Evento creado para la línea procesada:",
+                        lineaProcesada
+                    );
+                } else {
+                    console.log(
+                        "No se encontró matrícula para la línea procesada:",
+                        lineaProcesada
+                    );
+                }
+            });
+
+            console.log(
+                "Los eventos han sido procesados correctamente para todas las líneas procesadas"
+            );
+        } catch (error) {
+            console.error("Error al procesar los eventos:", error.message);
+        }
+    };
+
     return (
         <AuthContext.Provider value={{ authState }}>
             {!authState.status ? (
@@ -474,7 +609,13 @@ function GestionCalendarios() {
                                                     AgregarGrupos(grupos);
                                                 })
                                                 .then(() => {
+                                                    handleEventos();
+                                                })
+                                                .then(() => {
                                                     AgregarEventos(eventos);
+                                                })
+                                                .then(() => {
+                                                    setEventos([]);
                                                 })
                                                 .catch((error) => {
                                                     console.error(

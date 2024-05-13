@@ -99,7 +99,7 @@ function RealizarMatricula() {
                     (grupo) => grupo.AsignaturaId === asignatura.id
                 );
                 if (gruposAsignatura.length > 0) {
-                    // Filtra los grupos por tipo
+                    // FiltraR los grupos por tipo
                     const gruposPorTipo = {};
                     gruposAsignatura.forEach((grupo) => {
                         if (!gruposPorTipo[grupo.tipo]) {
@@ -107,7 +107,7 @@ function RealizarMatricula() {
                         }
                         gruposPorTipo[grupo.tipo].push(grupo);
                     });
-                    // Selecciona aleatoriamente un grupo de cada tipo
+                    // SeleccionaR aleatoriamente un grupo de cada tipo
                     const gruposSeleccionados = Object.values(
                         gruposPorTipo
                     ).map((gruposTipo) => shuffle(gruposTipo)[0]);

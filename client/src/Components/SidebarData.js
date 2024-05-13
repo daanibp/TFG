@@ -53,6 +53,11 @@ export const SidebarData = ({ id }) => [
                 icon: <SiCachet />,
                 link: "/admin/gestionmatriculas",
             },
+            {
+                title: "Asignar grupos",
+                icon: <SiCachet />,
+                link: "/admin/asignargrupos",
+            },
         ],
         visible: "false",
     },

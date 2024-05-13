@@ -14,6 +14,7 @@ import AdminRegistration from "./pages/AdminRegistration";
 import GestionCalendarios from "./pages/GestionCalendarios";
 import GestionMatriculas from "./pages/GestionMatriculas";
 import RealizarMatricula from "./pages/RealizarMatricula";
+import AsignarGrupos from "./pages/AsignarGrupos";
 
 function App() {
     const [authState, setAuthState] = useState({
@@ -124,6 +125,10 @@ function App() {
                         <Route
                             path="/admin/gestionmatriculas"
                             element={<GestionMatriculas />}
+                        />
+                        <Route
+                            path="/admin/asignargrupos"
+                            element={<AsignarGrupos />}
                         />
                         <Route path="*" element={<PageNotFound />} />
                     </Routes>
