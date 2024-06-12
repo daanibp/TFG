@@ -9,6 +9,9 @@ function Login() {
     const [password, setPassword] = useState("");
     const { setAuthState } = useContext(AuthContext);
 
+    const [mostrarMensaje, setMostrarMensaje] = useState(false);
+    const [mensaje, setMensaje] = useState("");
+
     let navigate = useNavigate();
 
     const login = () => {
@@ -17,13 +20,18 @@ function Login() {
             .post("http://localhost:5001/usuarios/login", data)
             .then((response) => {
                 if (response.data.error) {
-                    alert(response.data.error);
+                    //alert(response.data.error);
+                    setMensaje(response.data.error);
+                    setMostrarMensaje(true);
                 } else {
                     localStorage.setItem("accessToken", response.data.token);
                     setAuthState({
                         uo: response.data.uo,
                         id: response.data.id,
                         admin: response.data.admin,
+                        email: response.data.email,
+                        profesor: response.data.profesor,
+                        estado: response.data.estado,
                         status: true,
                     });
                     navigate("/");
@@ -49,6 +57,19 @@ function Login() {
             />
 
             <button onClick={login}> Iniciar sesión </button>
+            {mostrarMensaje && (
+                <div className="mensaje-login">
+                    {" "}
+                    {mensaje}{" "}
+                    <button
+                        onClick={() => {
+                            setMostrarMensaje(false);
+                        }}
+                    >
+                        Cerrar
+                    </button>
+                </div>
+            )}
         </div>
     );
 }

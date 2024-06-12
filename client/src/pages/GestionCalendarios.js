@@ -3,8 +3,9 @@ import axios from "axios";
 import { AuthContext } from "../helpers/AuthContext";
 import Sidebar from "../Components/Sidebar";
 import "../estilos/GestionCalendarios.css";
-import { ProcesaExcelHorarios } from "../helpers/ProcesaExcelHorarios";
+//import { ProcesaExcelHorarios } from "../helpers/ProcesaExcelHorarios";
 import { ProcesaExcelExamenes } from "../helpers/ProcesaExcelExamenes";
+import { ProcesaExcelHorarios_v2 } from "../helpers/ProcesaExcelHorarios_v2";
 
 const moment = require("moment");
 
@@ -18,31 +19,50 @@ function GestionCalendarios() {
 
     // Variable para almacenar los datos de línea procesados
     const lineasProcesadas = [];
+    const lineasProcesadasExamenes = [];
 
     const [asignaturas, setAsignaturas] = useState([]);
     const [grupos, setGrupos] = useState([]);
 
     // Eventos a añadir en la BBDD
-    const [usuarios, setUsuarios] = useState([]);
-    const [eventos, setEventos] = useState([]);
+    //const [usuarios, setUsuarios] = useState([]);
+    // const [eventos, setEventos] = useState([]);
 
     // Examenes
-    const [examenes, setExamenes] = useState([]);
-    const [eventosExamenes, setEventosExamenes] = useState([]);
+    // const [examenes, setExamenes] = useState([]);
+    // const [eventosExamenes, setEventosExamenes] = useState([]);
 
     // Matriculas
-    const [matriculasConGrupo, setMatriculasConGrupo] = useState([]);
+    //const [matriculas, setMatriculas] = useState([]);
+
+    // Sesiones
+    const [sesiones, setSesiones] = useState([]);
+    const [sesionesExamenes, setSesionesExamenes] = useState([]);
+
+    let sesionesNuevas = [];
+    let sesionesExamenesNuevas = [];
 
     const [selectedScheduleFile, setSelectedScheduleFile] = useState(null);
     const [selectedExamFile, setSelectedExamFile] = useState(null);
 
+    const [mostrarMensajeHorarios, setMostrarMensajeHorarios] = useState(false);
+    const [mensajeHorarios, setMensajeHorarios] = useState("");
+
+    const [mostrarMensajeTemporalHorarios, setMostrarMensajeTemporalHorarios] =
+        useState(false);
+    const [mostrarMensajeTemporalExamenes, setMostrarMensajeTemporalExamenes] =
+        useState(false);
+
+    const [mostrarMensajeExamenes, setMostrarMensajeExamenes] = useState(false);
+    const [mensajeExamenes, setMensajeExamenes] = useState("");
+
     useEffect(() => {
-        axios
-            .get(`http://localhost:5001/usuarios/allUsers/all`)
-            .then((response) => {
-                console.log("Usuarios: ", response.data);
-                setUsuarios(response.data);
-            });
+        // axios
+        //     .get(`http://localhost:5001/usuarios/allUsers/all`)
+        //     .then((response) => {
+        //         console.log("Usuarios: ", response.data);
+        //         setUsuarios(response.data);
+        //     });
         axios.get(`http://localhost:5001/solicitudEventos`).then((response) => {
             console.log("Solicitudes: ", response.data);
             setSolicitudes(response.data);
@@ -55,21 +75,31 @@ function GestionCalendarios() {
             console.log("Grupos: ", response.data);
             setGrupos(response.data);
         });
+        axios.get(`http://localhost:5001/sesiones/clases`).then((response) => {
+            console.log("Sesiones de clase: ", response.data);
+            setSesiones(response.data);
+        });
+        axios
+            .get(`http://localhost:5001/sesiones/examenes`)
+            .then((response) => {
+                console.log("Sesiones de exámenes: ", response.data);
+                setSesionesExamenes(response.data);
+            });
         // axios.get(`http://localhost:5001/eventos/clases`).then((response) => {
         //     console.log("Eventos: ", response.data);
         //     setEventos(response.data);
         // });
         // axios.get(`http://localhost:5001/eventos/examenes`).then((response) => {
-        //     console.log("Examenes: ", response.data);
+        //     console.log("Exámenes: ", response.data);
         //     setEventosExamenes(response.data);
         // });
-        axios
-            .get(`http://localhost:5001/matriculas/matriculasConGrupo`)
-            .then((response) => {
-                console.log("Matriculas: ", response.data);
-                setMatriculasConGrupo(response.data);
-            });
+        // axios.get(`http://localhost:5001/matriculas`).then((response) => {
+        //     console.log("Matrículas: ", response.data);
+        //     setMatriculas(response.data);
+        // });
     }, []);
+
+    // SOLICITUDES
 
     const showSolicitudDetails = (solicitud) => {
         axios
@@ -126,14 +156,54 @@ function GestionCalendarios() {
         window.location.reload();
     };
 
-    // Función para manejar el cambio en el archivo seleccionado para horarios de clases
+    // Función para filtrar las solicitudes por estado
+    const filtrarSolicitudes = (estado) => {
+        setFiltroEstado(estado);
+    };
+
+    const getButtonStyle = (estado) => {
+        return filtroEstado === estado ? "button-active" : "";
+    };
+
+    const solicitudesFiltradas = solicitudes.filter((solicitud) => {
+        if (filtroEstado === "Todos") return true;
+        return solicitud.estado === filtroEstado;
+    });
+
+    // HORARIOS
+
+    // Función para manejar el cambio en el archivo seleccionado para el horario
     const handleScheduleFileChange = (event) => {
-        setSelectedScheduleFile(event.target.files[0]);
+        const file = event.target.files[0];
+        if (
+            file &&
+            file.name !== "Horarios-2023-2024_1C.xlsx" &&
+            file.name !== "Horarios-2023-2024_2C.xlsx"
+        ) {
+            alert(
+                "Por favor, selecciona el archivo 'Horarios-2023-2024_1C.xlsx' o 'Horarios-2023-2024_2C.xlsx'."
+            );
+            event.target.value = null;
+            setSelectedScheduleFile(null);
+        } else {
+            setSelectedScheduleFile(file);
+        }
     };
 
     // Función para manejar el cambio en el archivo seleccionado para exámenes
     const handleExamFileChange = (event) => {
-        setSelectedExamFile(event.target.files[0]);
+        const file = event.target.files[0];
+        if (file && file.name !== "Examenes_23-24.xlsx") {
+            alert("Por favor, selecciona el archivo 'Examenes_23-24.xlsx'.");
+            event.target.value = null;
+            setSelectedExamFile(null);
+        } else {
+            setSelectedExamFile(file);
+        }
+    };
+
+    const handleCerrarMensaje = () => {
+        setMostrarMensajeHorarios(false);
     };
 
     // Función para determinar el cuatrimestre basado en el nombre del archivo
@@ -150,57 +220,38 @@ function GestionCalendarios() {
 
     const handleScheduleFileUpload = async () => {
         if (selectedScheduleFile) {
-            return new Promise(async (resolve, reject) => {
-                if (!selectedScheduleFile) {
-                    reject(new Error("No se seleccionó ningún archivo."));
-                    return;
-                }
-
-                console.log(
-                    "Archivo de horarios de clases seleccionado:",
-                    selectedScheduleFile
+            setMostrarMensajeTemporalHorarios(true);
+            // Verifica si se ha seleccionado un archivo
+            // Obtener el nombre del archivo
+            const nombreArchivo = selectedScheduleFile.name;
+            try {
+                // Determinar el cuatrimestre basado en el nombre del archivo
+                const cuatri = determinarCuatrimestre(nombreArchivo);
+                const dataHorarios = await ProcesaExcelHorarios_v2(
+                    selectedScheduleFile,
+                    [
+                        "1ITIN_A",
+                        "1ITIN_B",
+                        "2ITIN_A",
+                        "2ITIN_ING",
+                        "3ITIN_A",
+                        "4ITIN_A",
+                    ],
+                    cuatri
                 );
-
-                // Obtener el nombre del archivo
-                const nombreArchivo = selectedScheduleFile.name;
-
-                try {
-                    // Determinar el cuatrimestre basado en el nombre del archivo
-                    const cuatri = determinarCuatrimestre(nombreArchivo);
-
-                    // Procesar el archivo de horarios de clases
-                    await new Promise((resolve, reject) => {
-                        ProcesaExcelHorarios(
-                            selectedScheduleFile,
-                            [
-                                "1ITIN_A",
-                                "1ITIN_B",
-                                "2ITIN_A",
-                                "2ITIN_ING",
-                                "3ITIN_A",
-                                "4ITIN_A",
-                            ],
-                            async (lineData) => {
-                                try {
-                                    await handleAsignaturaProcessed(lineData);
-                                    //handleGrupoProcessed(lineData);
-                                    //await handleLineProcessed();
-                                    resolve();
-                                } catch (error) {
-                                    reject(error);
-                                }
-                            },
-                            cuatri
-                        );
-                    });
-                    // Resolver la promesa después de procesar el archivo
-                    resolve();
-                } catch (error) {
-                    // Si ocurre un error, rechazar la promesa
-                    console.error("Error:", error.message);
-                    reject(error);
+                console.log("Data Horarios: ", dataHorarios);
+                for (const info of dataHorarios) {
+                    lineasProcesadas.push(info);
                 }
-            });
+                await crearSesiones();
+                await AgregarSesiones(sesionesNuevas);
+                setMostrarMensajeTemporalHorarios(false);
+            } catch (error) {
+                console.error(
+                    "Error al procesar el archivo de horarios.",
+                    error
+                );
+            }
         } else {
             alert(
                 "Por favor selecciona un archivo de horarios antes de subirlo."
@@ -208,17 +259,397 @@ function GestionCalendarios() {
         }
     };
 
-    // Función para manejar la subida del archivo de exámenes
-    const handleExamFileUpload = () => {
-        if (selectedExamFile) {
-            console.log("Archivo de exámenes seleccionado:", selectedExamFile);
-            setExamenes(ProcesaExcelExamenes(selectedExamFile, ["GIITIN01"]));
-        } else {
-            alert(
-                "Por favor selecciona un archivo de exámenes antes de subirlo."
-            );
+    // Crea las sesiones a partir de los datos de la línea procesada
+    const crearSesiones = async () => {
+        try {
+            setSesiones([]);
+            for (const lineaProcesada of lineasProcesadas) {
+                try {
+                    const idGrupo = obtenerIdGrupo(lineaProcesada.grupo);
+
+                    // Utilizo los datos de la línea procesada para crear una nueva sesión
+                    const nuevaSesion = {
+                        asunto: lineaProcesada.nombre,
+                        fechaDeComienzo: formatearFecha(lineaProcesada.fecha),
+                        comienzo: lineaProcesada.horaComienzo,
+                        fechaDeFinalización: formatearFecha(
+                            lineaProcesada.fecha
+                        ),
+                        finalización: lineaProcesada.horaFinal,
+                        todoElDía: false,
+                        reminder: false,
+                        reminderDate: null,
+                        reminderTime: "10:00:00",
+                        meetingOrganizer: "Uniovi",
+                        description:
+                            lineaProcesada.grupo + " - " + lineaProcesada.aula,
+                        location: lineaProcesada.aula,
+                        priority: "Normal",
+                        private: false,
+                        sensitivity: "Normal",
+                        showTimeAs: 2,
+                        examen: false,
+                        GrupoId: idGrupo,
+                    };
+                    //console.log("Nueva Sesión: ", nuevaSesion);
+                    sesionesNuevas.push(nuevaSesion);
+                } catch (error) {
+                    console.error(
+                        "Error al crear la sesión para el grupo:",
+                        lineaProcesada.grupo,
+                        error.message
+                    );
+                }
+            }
+        } catch (error) {
+            console.error("Error al crear las sesiones:", error.message);
+            throw new Error("Error al crear las sesiones.");
         }
     };
+
+    function normalizarNombreGrupo(nombre) {
+        // Dividir PL2 y F_INFORM por el -
+        // const [grupo, abrAsignatura] = nombre.split("-");
+        // Dividir por el último guion para manejar casos donde la asignatura tenga guiones
+        const lastIndex = nombre.lastIndexOf("-");
+        const grupo = nombre.slice(0, lastIndex);
+        const abrAsignatura = nombre.slice(lastIndex + 1);
+
+        // Pueden ser PL-ENG1 o PL-ENG2 en vez de PL2
+        // const numeroGrupo = grupo.match(/\d+/); // Busca el primer número en la cadena
+        // Verificar si hay un guion en el nombre del grupo
+        const tieneGuion = grupo.includes("-");
+
+        if (tieneGuion) {
+            // Eliminar los números del grupo y mantener solo las letras
+            const grupoSinNumeros = grupo.replace(/\d+/g, "");
+            if (grupoSinNumeros.includes("ENG")) {
+                return [
+                    `${grupoSinNumeros}_${abrAsignatura}`,
+                    `${grupoSinNumeros.replace("ENG", "ING")}_${abrAsignatura}`,
+                ];
+            } else if (grupoSinNumeros.includes("ING")) {
+                return [
+                    `${grupoSinNumeros}_${abrAsignatura}`,
+                    `${grupoSinNumeros.replace("ING", "ENG")}_${abrAsignatura}`,
+                ];
+            } else {
+                return [
+                    `${grupoSinNumeros}_${abrAsignatura}`,
+                    ` ${grupoSinNumeros}_${abrAsignatura}`,
+                ];
+            }
+        } else {
+            // Si no hay guion, tratamos la primera parte como el tipo y la segunda como el número de grupo
+            const numeroGrupo = grupo.match(/\d+/);
+            if (numeroGrupo) {
+                const tipo = grupo.replace(/\d+/, ""); // Eliminar el número del grupo
+                // Devolver dos opciones normalizadas
+                return [
+                    `${tipo}-${numeroGrupo[0]}_${abrAsignatura}`,
+                    `${tipo}-0${numeroGrupo[0]}_${abrAsignatura}`,
+                ];
+            } else if (grupo.includes("ENG")) {
+                return [
+                    `${grupo}_${abrAsignatura}`,
+                    `${grupo.replace("ENG", "ING")}_${abrAsignatura}`, // Espacio en blanco antes del grupo
+                ];
+            } else if (grupo.includes("ING")) {
+                return [
+                    `${grupo}_${abrAsignatura}`,
+                    `${grupo.replace("ING", "ENG")}_${abrAsignatura}`, // Espacio en blanco antes del grupo
+                ];
+            } else {
+                // Si no hay número de grupo, devolver dos opciones normalizadas
+                return [
+                    `${grupo}_${abrAsignatura}`,
+                    ` ${grupo}_${abrAsignatura}`, // Espacio en blanco antes del grupo
+                ];
+            }
+        }
+    }
+
+    const obtenerIdGrupo = (nombreGrupo) => {
+        const opcionesNormalizadas = normalizarNombreGrupo(nombreGrupo);
+        // console.log("Nombre Recibido: ", nombreGrupo);
+        // console.log("Nombres Normalizados: ", opcionesNormalizadas);
+
+        const grupoEncontrado = grupos.find((grupo) => {
+            return (
+                grupo.nombre.toUpperCase() ===
+                    opcionesNormalizadas[0].toUpperCase() ||
+                grupo.nombre.toUpperCase() ===
+                    opcionesNormalizadas[1].toUpperCase()
+            );
+        });
+
+        if (grupoEncontrado) {
+            return grupoEncontrado.id;
+        }
+
+        throw new Error(
+            `No se encontró el grupo con el nombre: ${nombreGrupo}`
+        );
+    };
+
+    const AgregarSesiones = async (sesiones) => {
+        console.log("Sesiones antes de su agregación: ", sesiones);
+        console.log("Nuevas sesiones antes de su agregación: ", sesionesNuevas);
+        try {
+            const tamañoLote = 100; // Tamaño del lote
+            const respuestas = []; // Array para almacenar todas las respuestas
+            let nSesionesNuevas = 0;
+            // Dividir las sesiones en lotes
+            for (let i = 0; i < sesionesNuevas.length; i += tamañoLote) {
+                const lote = sesionesNuevas.slice(i, i + tamañoLote);
+                const response = await axios.post(
+                    "http://localhost:5001/sesiones/addLoteSesiones",
+                    lote
+                );
+                console.log(
+                    `Lote ${
+                        i / tamañoLote + 1
+                    } de sesiones enviado correctamente:`,
+                    response.data
+                );
+                respuestas.push(response.data);
+                nSesionesNuevas =
+                    response.data.sesionesCreadas.length + nSesionesNuevas;
+            }
+
+            // Procesar todas las respuestas almacenadas
+            for (const response of respuestas) {
+                if (response.sesionesCreadas.length > 0) {
+                    setMensajeHorarios(
+                        `Se han agregado ${nSesionesNuevas} sesiones nuevas al sistema.`
+                    );
+                } else {
+                    setMensajeHorarios(
+                        "No se ha agregado ninguna sesión nueva."
+                    );
+                }
+            }
+
+            setMostrarMensajeHorarios(true);
+        } catch (error) {
+            console.error("Error al agregar sesiones:", error.message);
+            setMensajeHorarios("Error al agregar sesiones.");
+            setMostrarMensajeHorarios(true);
+        }
+    };
+
+    // EXAMENES
+
+    // Función para manejar la subida del archivo de exámenes
+    const handleExamFileUpload = async () => {
+        try {
+            if (selectedExamFile) {
+                setMostrarMensajeTemporalExamenes(true);
+                const dataExamenes = await ProcesaExcelExamenes(
+                    selectedExamFile,
+                    ["GIITIN01"]
+                );
+                console.log("Data Examenes: ", dataExamenes);
+                for (const info of dataExamenes) {
+                    lineasProcesadasExamenes.push(info);
+                }
+                await crearSesionesExamenes();
+                await AgregarSesionesExamenes(sesionesExamenesNuevas);
+                setMostrarMensajeTemporalExamenes(false);
+            } else {
+                alert(
+                    "Por favor selecciona un archivo de exámenes antes de subirlo."
+                );
+            }
+        } catch (error) {
+            console.error("Error al procesar el archivo de exámenes.", error);
+        }
+    };
+
+    // Crea las sesiones a partir de los datos de la línea procesada
+    const crearSesionesExamenes = async () => {
+        try {
+            setSesionesExamenes([]);
+            for (const lineaProcesada of lineasProcesadasExamenes) {
+                try {
+                    // Utilizo los datos de la línea procesada para crear varias sesiones
+                    let gruposId = [];
+                    // Si es de tipo Teoría creas una sesion para todos los grupos de Teoría de esa asignatura
+                    if (lineaProcesada.tipo === "Teoría") {
+                        // Busco el grupoId de lineaProcesada.asignatura y que grupos.tipo sea Teoría
+                        gruposId = obtenerGrupos(
+                            lineaProcesada.asignatura,
+                            "Teoría"
+                        );
+                    } else if (lineaProcesada.tipo === "PL") {
+                        gruposId = obtenerGrupos(
+                            lineaProcesada.asignatura,
+                            "PL"
+                        );
+                    } else {
+                        console.error("Error: No es ni Teoría ni PL.");
+                    }
+                    //console.log("GruposId: ", gruposId);
+                    // Crear una sesión para cada grupo
+                    for (const grupoId of gruposId) {
+                        const nuevaSesion = {
+                            asunto: lineaProcesada.asignatura,
+                            fechaDeComienzo: lineaProcesada.fecha,
+                            comienzo: lineaProcesada.hora,
+                            fechaDeFinalización: lineaProcesada.fecha,
+                            finalización: añadirHoras(lineaProcesada.hora, 3),
+                            todoElDía: false,
+                            reminder: false,
+                            reminderDate: null,
+                            reminderTime: "10:00:00",
+                            meetingOrganizer: "Uniovi",
+                            description:
+                                "Exámen - " +
+                                lineaProcesada.asignatura +
+                                "(" +
+                                lineaProcesada.tipo +
+                                ") - " +
+                                lineaProcesada.aulas,
+                            location: lineaProcesada.aulas,
+                            priority: "Normal",
+                            private: false,
+                            sensitivity: "Normal",
+                            showTimeAs: 2,
+                            examen: true,
+                            GrupoId: grupoId,
+                        };
+                        //console.log("Nueva Sesión: ", nuevaSesion);
+                        sesionesExamenesNuevas.push(nuevaSesion);
+                    }
+                } catch (error) {
+                    console.error(
+                        "Error al crear la sesión para el examen de:",
+                        lineaProcesada.asignatura,
+                        error.message
+                    );
+                }
+            }
+        } catch (error) {
+            console.error("Error al crear las sesiones:", error.message);
+            throw new Error("Error al crear las sesiones.");
+        }
+    };
+
+    const AgregarSesionesExamenes = async (sesionesExamenes) => {
+        console.log(
+            "Sesiones de exámenes antes de su agregación: ",
+            sesionesExamenes
+        );
+        console.log(
+            "Nuevas sesiones de exámenes antes de su agregación: ",
+            sesionesExamenesNuevas
+        );
+        try {
+            const tamañoLote = 100; // Tamaño del lote
+            const respuestas = []; // Array para almacenar todas las respuestas
+            let nSesionesNuevas = 0;
+            // Dividir las sesiones en lotes
+            for (
+                let i = 0;
+                i < sesionesExamenesNuevas.length;
+                i += tamañoLote
+            ) {
+                const lote = sesionesExamenesNuevas.slice(i, i + tamañoLote);
+                const response = await axios.post(
+                    "http://localhost:5001/sesiones/addLoteSesiones",
+                    lote
+                );
+                console.log(
+                    `Lote ${
+                        i / tamañoLote + 1
+                    } de sesiones enviado correctamente:`,
+                    response.data
+                );
+                respuestas.push(response.data);
+                nSesionesNuevas =
+                    response.data.sesionesCreadas.length + nSesionesNuevas;
+            }
+
+            // Procesar todas las respuestas almacenadas
+            for (const response of respuestas) {
+                if (response.sesionesCreadas.length > 0) {
+                    setMensajeExamenes(
+                        `Se han agregado ${nSesionesNuevas} sesiones nuevas al sistema.`
+                    );
+                } else {
+                    setMensajeExamenes(
+                        "No se ha agregado ninguna sesión nueva."
+                    );
+                }
+            }
+
+            setMostrarMensajeExamenes(true);
+        } catch (error) {
+            console.error("Error al agregar sesiones:", error.message);
+            setMensajeExamenes("Error al agregar sesiones.");
+            setMostrarMensajeExamenes(true);
+        }
+    };
+
+    const handleCerrarMensajeExamenes = () => {
+        setMostrarMensajeExamenes(false);
+    };
+
+    // FUNCIONES EXTRA
+
+    function obtenerGrupos(nombreAsignatura, tipo) {
+        // Obtener el ID de la asignatura usando el nombre de la asignatura
+        const asignaturaId = obtenerAsignaturaId(nombreAsignatura);
+        if (!asignaturaId) {
+            console.error(
+                `No se encontró el ID para la asignatura: ${nombreAsignatura}`
+            );
+            return []; // Devolver un array vacío si no se encuentra el ID de la asignatura
+        }
+
+        // Filtrar los grupos según el ID de la asignatura y el tipo
+        return grupos
+            .filter(
+                (grupo) =>
+                    grupo.AsignaturaId === asignaturaId && grupo.tipo === tipo
+            )
+            .map((grupo) => grupo.id);
+    }
+
+    function obtenerAsignaturaId(nombreAsignatura) {
+        // Buscar la asignatura en la lista de asignaturas
+        const asignatura = asignaturas.find((asig) => {
+            // Separar el nombreExamen por guiones y obtener la parte después del segundo guion
+            const partesAsignatura = asig.nombreExamen.split("-");
+            if (partesAsignatura.length < 3) {
+                return false;
+            }
+            const nombreExamenAsignatura = partesAsignatura
+                .slice(2)
+                .join("-")
+                .trim();
+            return nombreExamenAsignatura === nombreAsignatura;
+        });
+        return asignatura ? asignatura.id : null;
+    }
+
+    // Función para añadir horas a una fecha
+    function añadirHoras(hora, horasAñadir) {
+        // Convertir la hora a un objeto Date
+        let [horas, minutos, segundos] = hora.split(":").map(Number);
+        let fecha = new Date();
+        fecha.setHours(horas, minutos, segundos, 0);
+
+        // Añadir las horas
+        fecha.setHours(fecha.getHours() + horasAñadir);
+
+        // Formatear la nueva hora a HH:MM:SS
+        let horasFinal = String(fecha.getHours()).padStart(2, "0");
+        let minutosFinal = String(fecha.getMinutes()).padStart(2, "0");
+        let segundosFinal = String(fecha.getSeconds()).padStart(2, "0");
+
+        return `${horasFinal}:${minutosFinal}:${segundosFinal}`;
+    }
 
     const formatTime = (timeString) => {
         if (!timeString) return "";
@@ -233,331 +664,11 @@ function GestionCalendarios() {
         return `${hours}:${minutes}`;
     };
 
-    // Función para filtrar las solicitudes por estado
-    const filtrarSolicitudes = (estado) => {
-        setFiltroEstado(estado);
-    };
-
-    const getButtonStyle = (estado) => {
-        return filtroEstado === estado ? "button-active" : "";
-    };
-
-    const solicitudesFiltradas = solicitudes.filter((solicitud) => {
-        if (filtroEstado === "Todos") return true;
-        return solicitud.estado === filtroEstado;
-    });
-
-    const AgregarAsignaturas = async (asignaturas) => {
-        console.log("Asignaturas antes de su agregación: ", asignaturas);
-        try {
-            await axios.post(
-                "http://localhost:5001/asignaturas/addLoteAsignaturas",
-                asignaturas
-            );
-            console.log("Las asignaturas se han agregado correctamente.");
-        } catch (error) {
-            console.error("Error al agregar asignaturas:", error);
-        }
-    };
-
-    const AgregarGrupos = async (grupos) => {
-        // Aquí ya tenemos las asignaturas y los grupos creado y en local
-        // Recorro los usuarios de mi base de datos
-        // Para cada usuario que esté matriculado en la asignatura del array asignaturas y pertenezca al grupo de esa asignatura
-
-        console.log("Grupos antes de su agregación: ", grupos);
-        try {
-            await axios.post("http://localhost:5001/grupos/addGrupos", grupos);
-            console.log("Los grupos se han agregado correctamente.");
-        } catch (error) {
-            console.error("Error al agregar grupos:", error);
-        }
-    };
-
-    const AgregarEventos = async (eventos) => {
-        console.log("Eventos antes de su agregación: ", eventos);
-        try {
-            // Dividir los eventos en lotes de 100 eventos cada uno
-            for (let i = 0; i < eventos.length; i += 100) {
-                const loteEventos = eventos.slice(i, i + 100);
-
-                // Enviar el lote de eventos actual
-                await axios.post(
-                    "http://localhost:5001/eventos/addLoteEventos",
-                    loteEventos
-                );
-
-                console.log(`Se han agregado ${loteEventos.length} eventos.`);
-            }
-            console.log("Todos los eventos se han agregado correctamente.");
-        } catch (error) {
-            console.error("Error al agregar eventos:", error);
-        }
-    };
-
     // Función para formatear la fecha al formato deseado con zona horaria
     function formatearFecha(fecha) {
         // Parsear la fecha usando Moment.js y formatearla en el formato deseado con zona horaria
         return moment(fecha, "DD/MM/YYYY").format("YYYY-MM-DD");
     }
-
-    // Crea el evento a partir de los datos de la línea procesada
-    const crearEvento = async (lineaProcesada, id) => {
-        try {
-            // Verificar si los datos necesarios están presentes en la línea procesada
-            if (
-                !lineaProcesada.nombre ||
-                !lineaProcesada.fecha ||
-                !lineaProcesada.horaComienzo ||
-                !lineaProcesada.horaFinal ||
-                !lineaProcesada.grupo ||
-                !lineaProcesada.aula
-            ) {
-                throw new Error(
-                    "Faltan datos en la línea procesada para crear el evento"
-                );
-            }
-            // Utiliza los datos de la línea procesada para crear un nuevo evento
-            const nuevoEvento = {
-                asunto: lineaProcesada.nombre,
-                fechaDeComienzo: formatearFecha(lineaProcesada.fecha),
-                comienzo: lineaProcesada.horaComienzo,
-                fechaDeFinalización: formatearFecha(lineaProcesada.fecha),
-                finalización: lineaProcesada.horaFinal,
-                todoElDía: false,
-                reminder: false,
-                reminderDate: null,
-                reminderTime: "10:00:00",
-                meetingOrganizer: "Uniovi",
-                description: lineaProcesada.grupo + " - " + lineaProcesada.aula,
-                location: lineaProcesada.aula,
-                priority: "Normal",
-                private: false,
-                sensitivity: "Normal",
-                showTimeAs: 2,
-                examen: false,
-                UsuarioId: id,
-            };
-            console.log("Nuevo Evento: ", nuevoEvento);
-            eventos.push(nuevoEvento);
-        } catch (error) {
-            console.error("Error al crear el evento:", error.message);
-            throw new Error("Error al crear el evento");
-        }
-    };
-
-    // Crea el evento a partir de los datos de los examenes
-    const crearEventosExamen = async (examenes, id) => {
-        console.log("Exámenes antes de crear los eventos:", examenes);
-        try {
-            // Iterar sobre cada examen
-            examenes.forEach(async (examen) => {
-                // Crear el evento con los datos del examen
-                const nuevoEvento = {
-                    asunto: "EX " + examen.asignatura,
-                    fechaDeComienzo: examen.fecha,
-                    comienzo: examen.hora,
-                    fechaDeFinalización: examen.fecha,
-                    finalización: examen.hora,
-                    todoElDía: false,
-                    reminder: false,
-                    reminderDate: null,
-                    reminderTime: null,
-                    meetingOrganizer: "Uniovi",
-                    description: examen.aulas,
-                    location: examen.aulas,
-                    priority: "Normal",
-                    private: false,
-                    sensitivity: "Normal",
-                    showTimeAs: 2,
-                    examen: true,
-                    UsuarioId: id,
-                };
-
-                console.log("Nuevo Evento: ", nuevoEvento);
-                eventosExamenes.push(nuevoEvento);
-            });
-        } catch (error) {
-            console.error(
-                "Error al crear eventos desde exámenes:",
-                error.message
-            );
-            throw new Error("Error al crear eventos desde exámenes");
-        }
-    };
-
-    // Función para cargar las asignaturas en la BBDD si no lo están
-    const handleAsignaturaProcessed = async (lineData) => {
-        // Verificar si ya existe una asignatura con el mismo id en la base de datos
-        //console.log("Datos de la línea procesada:", lineData);
-        const asignaturaExistente = asignaturas.find(
-            (asignatura) => asignatura.idAsignatura === lineData.id
-        );
-
-        lineasProcesadas.push(lineData);
-
-        if (asignaturaExistente) {
-            console.log(
-                "La asignatura " +
-                    lineData.abr +
-                    " ya existe en la base de datos."
-            );
-            // No hacer nada si la asignatura ya existe
-        } else {
-            console.log(
-                "La asignatura " +
-                    lineData.abr +
-                    " no existe en la base de datos."
-            );
-
-            const nuevaAsignatura = {
-                id: lineData.idNumerico,
-                idAsignatura: lineData.id,
-                nombreReal: lineData.nombre,
-                nombreHorario: lineData.abr,
-                nombreExamen: lineData.abr,
-            };
-            console.log("Nueva Asignatura: ", nuevaAsignatura);
-            // Agregar la nueva asignatura al array de asignaturas
-            asignaturas.push(nuevaAsignatura);
-        }
-    };
-
-    // Función para manejar el procesamiento de un grupo
-    const handleGrupoProcessed = async () => {
-        console.log(
-            "--------------------- EMPIEZA HANDLE GRUPO ---------------------"
-        );
-        console.log(
-            "Lineas Procesadas: ",
-            lineasProcesadas,
-            lineasProcesadas.length
-        );
-        try {
-            // Procesar los grupos para todas las líneas almacenadas
-            for (const lineData of lineasProcesadas) {
-                // Manejar el grupo con los datos de la línea
-                // handleGrupoProcessed(lineData);
-                // Buscar la asignatura necesaria en la lista de asignaturas
-                const asignatura = asignaturas.find(
-                    (asignatura) => asignatura.idAsignatura === lineData.id
-                );
-                console.log(asignatura);
-
-                let idAsignatura = 0;
-                if (asignatura) {
-                    // Obtener el ID de la asignatura
-                    idAsignatura = asignatura.id;
-                    console.log("ID asignatura: ", idAsignatura);
-                } else {
-                    console.error("No se encontró la asignatura:", lineData.id);
-                }
-
-                const grupoExistente = grupos.find(
-                    (grupo) => grupo.nombre === lineData.grupo
-                );
-                if (!grupoExistente) {
-                    console.log(
-                        "El grupo " +
-                            lineData.grupo +
-                            " no existe en la base de datos."
-                    );
-                    // Crear un nuevo objeto de grupo
-                    const nuevoGrupo = {
-                        nombre: lineData.grupo,
-                        tipo: getTipoGrupo(lineData.grupo),
-                        AsignaturaId: idAsignatura,
-                    };
-                    console.log("Nuevo Grupo: ", nuevoGrupo);
-                    grupos.push(nuevoGrupo);
-                    //const nuevosGrupos = [...grupos, nuevoGrupo];
-                    //setGrupos(nuevosGrupos); // Actualizar el estado con la nueva copia
-                    console.log(
-                        "Actualizacion grupos numero: ",
-                        grupos.length,
-                        grupos
-                    );
-                } else {
-                    console.log(
-                        "El grupo " +
-                            lineData.grupo +
-                            " ya existe en la base de datos."
-                    );
-                }
-            }
-        } catch (error) {
-            console.error("Error al procesar los grupos:", error);
-        }
-    };
-
-    // Función para obtener el tipo de grupo a partir del nombre del grupo
-    const getTipoGrupo = (nombreGrupo) => {
-        // Verificar si el nombre del grupo empieza por PL
-        if (nombreGrupo.startsWith("PL")) {
-            return "PL";
-        }
-        // Verificar si el nombre del grupo empieza por PA
-        else if (nombreGrupo.startsWith("PA")) {
-            return "PA";
-        }
-        // Verificar si el nombre del grupo empieza por TG
-        else if (nombreGrupo.startsWith("TG")) {
-            return "TG";
-        }
-        // Si no cumple ninguna de las condiciones anteriores, devolver "Teoría"
-        else {
-            return "Teoría";
-        }
-    };
-
-    const handleEventos = async () => {
-        console.log(
-            "--------------------- EMPIEZA HANDLE EVENTOS ---------------------"
-        );
-        try {
-            // Verificar si hay matrículas con grupos en el array
-            if (!matriculasConGrupo || matriculasConGrupo.length === 0) {
-                throw new Error(
-                    "No hay matrículas con grupos para manejar eventos"
-                );
-            }
-
-            // Iterar sobre cada línea procesada
-            lineasProcesadas.forEach((lineaProcesada) => {
-                // Verificar si la asignatura y el grupo de la línea procesada están en las matrículas
-                const matriculaEncontrada = matriculasConGrupo.find(
-                    (matricula) => {
-                        return (
-                            matricula.AsignaturaId ===
-                                lineaProcesada.idNumerico &&
-                            matricula.GrupoNombre === lineaProcesada.grupo
-                        );
-                    }
-                );
-
-                if (matriculaEncontrada) {
-                    // Si la matrícula se encontró, obtener el usuarioId y crear el evento
-                    const usuarioId = matriculaEncontrada.UsuarioId;
-                    crearEvento(lineaProcesada, usuarioId);
-                    console.log(
-                        "Evento creado para la línea procesada:",
-                        lineaProcesada
-                    );
-                } else {
-                    console.log(
-                        "No se encontró matrícula para la línea procesada:",
-                        lineaProcesada
-                    );
-                }
-            });
-
-            console.log(
-                "Los eventos han sido procesados correctamente para todas las líneas procesadas"
-            );
-        } catch (error) {
-            console.error("Error al procesar los eventos:", error.message);
-        }
-    };
 
     return (
         <AuthContext.Provider value={{ authState }}>
@@ -584,7 +695,6 @@ function GestionCalendarios() {
                                 <div className="Titulo">
                                     <h1>Eventos</h1>
                                 </div>
-
                                 <div className="CargarClases">
                                     Cargar horario de clases
                                 </div>
@@ -594,41 +704,44 @@ function GestionCalendarios() {
                                         accept=".csv"
                                         onChange={handleScheduleFileChange}
                                     />
-                                    <button
-                                        onClick={() =>
-                                            handleScheduleFileUpload()
-                                                .then(() => {
-                                                    AgregarAsignaturas(
-                                                        asignaturas
-                                                    );
-                                                })
-                                                .then(() => {
-                                                    handleGrupoProcessed();
-                                                })
-                                                .then(() => {
-                                                    AgregarGrupos(grupos);
-                                                })
-                                                .then(() => {
-                                                    handleEventos();
-                                                })
-                                                .then(() => {
-                                                    AgregarEventos(eventos);
-                                                })
-                                                .then(() => {
-                                                    setEventos([]);
-                                                })
-                                                .catch((error) => {
-                                                    console.error(
-                                                        "Error al procesar el archivo de horarios:",
-                                                        error
-                                                    );
-                                                })
-                                        }
-                                    >
+                                    <button onClick={handleScheduleFileUpload}>
                                         Cargar horarios de clases
                                     </button>
+                                    {mostrarMensajeTemporalHorarios && (
+                                        <div className="mensaje-dialogo-asignaturas">
+                                            <div className="mensaje-dialogo-contenido-asignaturas">
+                                                <p>
+                                                    Procesando el archivo.{" "}
+                                                    <br />
+                                                    Creando sesiones... <br />
+                                                    Este proceso puede tardar
+                                                    unos segundos. <br />
+                                                    Espere.
+                                                </p>
+                                            </div>
+                                        </div>
+                                    )}
+                                    {mostrarMensajeHorarios && (
+                                        <div className="mensaje-dialogo-asignaturas">
+                                            <div className="mensaje-dialogo-contenido-asignaturas">
+                                                <p>{mensajeHorarios}</p>
+                                                <button
+                                                    onClick={
+                                                        handleCerrarMensaje
+                                                    }
+                                                >
+                                                    OK
+                                                </button>
+                                            </div>
+                                        </div>
+                                    )}
                                 </div>
-
+                                <p>
+                                    Para cargar el horario de clases debemos
+                                    seleccionar el Excel
+                                    "Horarios-2023-2024_1C.xlsx" y
+                                    "Horarios-2023-2024_2C".
+                                </p>
                                 <div className="GenerarExamenes">
                                     Cargar calendario de exámenes
                                 </div>
@@ -643,7 +756,40 @@ function GestionCalendarios() {
                                     >
                                         Cargar calendario de exámenes
                                     </button>
+
+                                    {mostrarMensajeTemporalExamenes && (
+                                        <div className="mensaje-dialogo-asignaturas">
+                                            <div className="mensaje-dialogo-contenido-asignaturas">
+                                                <p>
+                                                    Procesando el archivo.{" "}
+                                                    <br />
+                                                    Creando sesiones... <br />
+                                                    Este proceso puede tardar
+                                                    unos segundos. <br />
+                                                    Espere.
+                                                </p>
+                                            </div>
+                                        </div>
+                                    )}
+                                    {mostrarMensajeExamenes && (
+                                        <div className="mensaje-dialogo-asignaturas">
+                                            <div className="mensaje-dialogo-contenido-asignaturas">
+                                                <p>{mensajeExamenes}</p>
+                                                <button
+                                                    onClick={
+                                                        handleCerrarMensajeExamenes
+                                                    }
+                                                >
+                                                    OK
+                                                </button>
+                                            </div>
+                                        </div>
+                                    )}
                                 </div>
+                                <p>
+                                    Para cargar el horario de clases debemos
+                                    seleccionar el Excel "Examenes_23-24.xlsx".
+                                </p>
                             </div>
 
                             <div className="boxEventosGlobales">

@@ -27,20 +27,6 @@ router.post("/addGrupo", async (req, res) => {
     }
 });
 
-// router.post("/addGrupos", async (req, res) => {
-//     const grupos = req.body;
-//     try {
-//         // Insertar todos los grupos en la base de datos
-//         await Grupo.bulkCreate(grupos);
-//         console.log("Creando los siguientes Grupos: ", grupos);
-//         console.log("Grupos creados exitosamente");
-//         res.status(201).send("Grupos creados exitosamente");
-//     } catch (error) {
-//         console.error("Error al crear los grupos:", error);
-//         res.status(500).send("Error interno del servidor al crear los grupos");
-//     }
-// });
-
 router.post("/addGrupos", async (req, res) => {
     const grupos = req.body;
     const gruposCreados = [];
@@ -60,13 +46,17 @@ router.post("/addGrupos", async (req, res) => {
                 gruposExistente.push(grupo);
             }
         }
-        console.log("Grupos creados exitosamente: ", gruposCreados);
-        //console.log("Grupos existentes y no insertados: ", gruposExistente);
-        // res.status(201).json({
-        //     message: "Grupos creados exitosamente",
-        //     gruposCreados,
-        //     gruposExistente,
-        // });
+
+        // Obtener todos los grupos después de crear los nuevos
+        const todosLosGrupos = await Grupo.findAll();
+
+        console.log("Grupos creados exitosamente: ", gruposCreados.length);
+        return res.status(201).json({
+            message: "Grupos creados exitosamente",
+            gruposCreados,
+            gruposExistente,
+            todosLosGrupos,
+        });
     } catch (error) {
         console.error("Error al crear los grupos:", error);
         res.status(500).send("Error interno del servidor al crear los grupos");

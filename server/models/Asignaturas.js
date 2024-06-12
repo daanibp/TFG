@@ -10,6 +10,10 @@ module.exports = (sequelize, DataTypes) => {
             type: DataTypes.STRING,
             allowNull: false,
         },
+        curso: {
+            type: DataTypes.INTEGER,
+            allowNull: false,
+        },
         nombreReal: {
             type: DataTypes.STRING,
             allowNull: false,
@@ -19,6 +23,10 @@ module.exports = (sequelize, DataTypes) => {
             allowNull: false,
         },
         nombreExamen: {
+            type: DataTypes.STRING,
+            allowNull: false,
+        },
+        nombreAsignación: {
             type: DataTypes.STRING,
             allowNull: false,
         },

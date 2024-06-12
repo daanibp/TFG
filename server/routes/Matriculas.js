@@ -99,53 +99,47 @@ router.put("/denegar/:id", async (req, res) => {
 });
 
 router.post("/addLoteMatriculas", async (req, res) => {
-    const { estado, UsuarioId, matriculas } = req.body;
+    const matriculas = req.body; // Obtener el array de matrículas directamente de req.body
 
     try {
-        // Obtener los IDs de asignatura y grupo de las matrículas proporcionadas
-        const asignaturaIds = matriculas.map(
-            (matricula) => matricula.asignaturaId
-        );
-        const grupoIds = matriculas.map((matricula) => matricula.grupoId);
+        const matriculasCreadas = [];
+        const matriculasDuplicadas = [];
 
-        // Verificar si ya existen matrículas para las asignaturas proporcionadas
-        const existingMatriculas = await Matriculas.findAll({
-            where: {
-                UsuarioId: UsuarioId,
-                AsignaturaId: {
-                    [Op.in]: asignaturaIds,
-                },
-                GrupoId: {
-                    [Op.in]: grupoIds,
-                },
-            },
-        });
+        // Verificar si ya existen matrículas para las combinaciones de UsuarioId, AsignaturaId y GrupoId proporcionadas
+        for (const matricula of matriculas) {
+            const { UsuarioId, AsignaturaId, GrupoId } = matricula;
 
-        // Si ya existen matrículas para alguna de las asignaturas, devuelve un error
-        if (existingMatriculas.length > 0) {
-            const duplicadas = existingMatriculas.map(
+            const existingMatricula = await Matriculas.findOne({
+                where: { UsuarioId, AsignaturaId, GrupoId },
+            });
+
+            if (existingMatricula) {
+                matriculasDuplicadas.push(existingMatricula);
+            } else {
+                const nuevaMatricula = await Matriculas.create(matricula);
+                matriculasCreadas.push(nuevaMatricula);
+            }
+        }
+
+        // Si hay matrículas duplicadas, devolver un error
+        if (matriculasDuplicadas.length > 0) {
+            const asignaturasDuplicadas = matriculasDuplicadas.map(
                 (matricula) => matricula.AsignaturaId
             );
             return res.status(400).json({
-                error: "Ya existen matrículas para algunas de las asignaturas proporcionadas",
-                asignaturasDuplicadas: duplicadas,
+                error: "Ya existen matrículas para algunas de las combinaciones de usuario, asignatura y grupo proporcionadas",
+                asignaturasDuplicadas,
             });
         }
 
-        // Crea las matrículas para cada asignatura en el array
-        const nuevasMatriculas = await Promise.all(
-            matriculas.map(async (matricula) => {
-                return await Matriculas.create({
-                    estado: estado,
-                    UsuarioId: UsuarioId,
-                    AsignaturaId: matricula.asignaturaId,
-                    GrupoId: matricula.grupoId,
-                });
-            })
+        console.log(
+            "Matrículas creadas correctamente:",
+            matriculasCreadas.length
         );
-
-        console.log("Matrículas creadas correctamente");
-        res.status(201).json(nuevasMatriculas);
+        return res.status(201).json({
+            message: "Matrículas creadas exitosamente",
+            matriculasCreadas,
+        });
     } catch (error) {
         console.error("Error al crear las matrículas:", error);
         res.status(500).send(

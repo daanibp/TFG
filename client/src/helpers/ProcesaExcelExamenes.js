@@ -1,84 +1,83 @@
 import * as XLSX from "xlsx";
 
 export function ProcesaExcelExamenes(file, hojasAProcesar) {
-    const reader = new FileReader();
+    return new Promise((resolve, reject) => {
+        const reader = new FileReader();
 
-    reader.onload = async (event) => {
-        const binaryString = event.target.result;
-        const workbook = XLSX.read(binaryString, { type: "binary" });
+        reader.onload = (event) => {
+            const binaryString = event.target.result;
+            const workbook = XLSX.read(binaryString, { type: "binary" });
 
-        let examenes = [];
+            let examenes = [];
 
-        // Iterar sobre las hojas especificadas
-        hojasAProcesar.forEach((hoja) => {
-            const sheet = workbook.Sheets[hoja];
-            const data = XLSX.utils.sheet_to_json(sheet, { header: 1 });
+            try {
+                // Iterar sobre las hojas especificadas
+                hojasAProcesar.forEach((hoja) => {
+                    const sheet = workbook.Sheets[hoja];
+                    const data = XLSX.utils.sheet_to_json(sheet, { header: 1 });
 
-            let fechas = [];
-            let año = "";
-            let hora = "";
+                    let fechas = [];
+                    let año = "";
+                    let hora = "";
 
-            // Mostrar todos los datos
-            //console.log(`Datos de la hoja ${hoja}:`, data);
+                    // Procesar cada fila de datos
+                    data.forEach((fila) => {
+                        if (fila.length === 1) {
+                            año = fila[0].match(/\d{4}(?=\/\d{2}|$)/)[0];
+                        } else {
+                            if (fila[0] === "Hora") {
+                                fechas = [];
+                                fechas.push(
+                                    convertirFecha(fila[1], año),
+                                    convertirFecha(fila[3], año),
+                                    convertirFecha(fila[5], año),
+                                    convertirFecha(fila[7], año),
+                                    convertirFecha(fila[9], año)
+                                );
+                            } else {
+                                if (fila[0] !== null && fila[0] !== "")
+                                    hora = devuelveHora(fila[0]);
 
-            // Procesar cada fila de datos
-            data.forEach((fila) => {
-                //console.log("Fila:", fila);
-
-                if (fila.length === 1) {
-                    año = fila[0].match(/\d{4}(?=\/\d{2}|$)/)[0];
-                    //return; // Saltar esta fila
-                } else {
-                    // si fila[0] = "Hora" > guardamos en array fechas
-                    // fechas fila [1] ... fila [9]
-                    if (fila[0] === "Hora") {
-                        //console.log("Año", año);
-                        fechas = [];
-                        fechas.push(
-                            convertirFecha(fila[1], año),
-                            convertirFecha(fila[3], año),
-                            convertirFecha(fila[5], año),
-                            convertirFecha(fila[7], año),
-                            convertirFecha(fila[9], año)
-                        );
-                        //console.log("Fechas", fechas);
-                    } else {
-                        // Extraer información de la fila y agregarla a la lista de exámenes
-
-                        // Extraer la hora de la fila
-                        if (fila[0] !== null && fila[0] !== "")
-                            hora = devuelveHora(fila[0]);
-
-                        // Iterar sobre los pares de valores de asignatura y aulas
-                        for (let i = 1; i < fila.length; i += 2) {
-                            if (fila[i] !== "" && fila[i] !== undefined) {
-                                const asignatura = devuelveAsignatura(fila[i]);
-                                const aulas = devuelveAulas(fila[i + 1]);
-                                const tipo = devuelveTipo(fila[i]);
-                                const fecha = devuelveFecha(fechas, i);
-                                // Agregar el examen a la lista de exámenes de esta hoja
-                                examenes.push({
-                                    asignatura: asignatura,
-                                    hora: hora,
-                                    tipo: tipo,
-                                    aulas: aulas,
-                                    fecha: fecha,
-                                });
+                                for (let i = 1; i < fila.length; i += 2) {
+                                    if (
+                                        fila[i] !== "" &&
+                                        fila[i] !== undefined
+                                    ) {
+                                        const asignatura = devuelveAsignatura(
+                                            fila[i]
+                                        );
+                                        const aulas = devuelveAulas(
+                                            fila[i + 1]
+                                        );
+                                        const tipo = devuelveTipo(fila[i]);
+                                        const fecha = devuelveFecha(fechas, i);
+                                        examenes.push({
+                                            asignatura: asignatura,
+                                            hora: hora,
+                                            tipo: tipo,
+                                            aulas: aulas,
+                                            fecha: fecha,
+                                        });
+                                    }
+                                }
                             }
                         }
-                    }
-                }
-            });
-        });
+                    });
+                });
 
-        // Mostrar todos los exámenes
-        console.log("Exámenes:", examenes);
+                //console.log("Exámenes:", examenes);
+                resolve(examenes);
+            } catch (error) {
+                reject(error);
+            }
+        };
 
-        // Devolver los exámenes procesados
-        return examenes;
-    };
+        reader.onerror = (error) => {
+            reject(error);
+        };
 
-    reader.readAsBinaryString(file);
+        reader.readAsBinaryString(file);
+    });
 }
 
 function convertirFecha(fechaString, año) {
@@ -138,17 +137,26 @@ function devuelveHora(valor) {
 }
 
 function devuelveTipo(valor) {
-    const lowercaseValor = valor.toLowerCase();
+    // Convertir a minúsculas y quitar espacios alrededor
+    const lowercaseValor = valor.toLowerCase().trim();
+    // console.log(`Valor original: "${valor}"`);
+    // console.log(`Valor en minúsculas y sin espacios: "${lowercaseValor}"`);
 
-    // Verificar si el string termina con "prácticas" o "prac."
-    if (
-        lowercaseValor.endsWith("prácticas") ||
-        lowercaseValor.endsWith("prac.")
-    ) {
-        return "PL";
-    } else {
-        return "Teoría";
+    // Extraer lo que está entre paréntesis
+    const tipoSesion = lowercaseValor.match(/\(([^)]+)\)$/);
+    if (tipoSesion) {
+        const tipo = tipoSesion[1].trim();
+        // console.log(`Texto entre paréntesis: "${tipo}"`);
+
+        // Verificar si el texto extraído termina con "prácticas" o "prac."
+        if (tipo === "prácticas" || tipo === "prac.") {
+            // console.log(`Coincidencia encontrada: "PL"`);
+            return "PL";
+        }
     }
+
+    //console.log(`No coincide, devuelve: "Teoría"`);
+    return "Teoría";
 }
 
 function devuelveAsignatura(valor) {
@@ -183,6 +191,12 @@ function devuelveAsignatura(valor) {
                 .substring(0, indiceFinal)
                 .trim();
         }
+
+        // Eliminar las palabras "práctica" y "teoría" si están presentes
+        asignaturaAcortada = asignaturaAcortada
+            .replace(/\bpráctica\b/gi, "")
+            .replace(/\bteoría\b/gi, "")
+            .trim();
 
         return asignaturaAcortada;
     } else {

@@ -1,5 +1,10 @@
 module.exports = (sequelize, DataTypes) => {
     const SolicitudEvento = sequelize.define("SolicitudEvento", {
+        id: {
+            type: DataTypes.INTEGER,
+            autoIncrement: true,
+            primaryKey: true,
+        },
         estado: {
             type: DataTypes.STRING,
             allowNull: false,

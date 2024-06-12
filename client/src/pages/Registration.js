@@ -3,30 +3,42 @@ import { Formik, Form, Field, ErrorMessage } from "formik";
 import * as Yup from "yup";
 import axios from "axios";
 import "../estilos/Registration.css";
-import { useNavigate } from "react-router-dom";
 
 function Registration() {
     const initialValues = {
         uo: "",
-        password: "",
+        newPassword: "",
     };
-    let navigate = useNavigate();
 
     const [registroExitoso, setRegistroExitoso] = useState(false);
+    const [mensajeError, setMensajeError] = useState("");
 
     const validationSchema = Yup.object().shape({
         uo: Yup.string().min(3).max(15).required("El UO es obligatorio"),
-        password: Yup.string()
+        newPassword: Yup.string()
             .min(4)
             .max(20)
             .required("La contraseña es obligatoria"),
     });
 
-    const onSubmit = (data) => {
-        axios.post("http://localhost:5001/usuarios", data).then((response) => {
-            console.log(data);
-            setRegistroExitoso(true);
-        });
+    const onSubmit = async (data, { resetForm }) => {
+        try {
+            const response = await axios.post(
+                "http://localhost:5001/usuarios/register",
+                data
+            );
+            if (response.status === 200) {
+                setRegistroExitoso(true);
+                setMensajeError("");
+                resetForm();
+            } else {
+                setRegistroExitoso(false);
+                setMensajeError(response.data.error || "Error al registrar");
+            }
+        } catch (error) {
+            setRegistroExitoso(false);
+            setMensajeError(error.response.data.error);
+        }
     };
 
     return (
@@ -45,11 +57,11 @@ function Registration() {
                         placeholder="(Ex. UO111111...)"
                     />
                     <label>Contraseña: </label>
-                    <ErrorMessage name="password" component="span" />
+                    <ErrorMessage name="newPassword" component="span" />
                     <Field
                         type="password"
                         id="inputCreatePost"
-                        name="password"
+                        name="newPassword"
                         placeholder="Tu contraseña..."
                     />
                     <button className="buttonRegistration" type="submit">
@@ -57,11 +69,21 @@ function Registration() {
                     </button>
 
                     {registroExitoso && (
-                        <div className="mensaje">
-                            <p>Te has registrado correctamente. ¡Bienvenido!</p>
-                            <button onClick={() => navigate("/login")}>
-                                Iniciar Sesión
+                        <div className="mensaje-dialogo">
+                            <p>
+                                Te has registrado correctamente. Por favor,
+                                revisa tu correo electrónico para validar tu
+                                cuenta.
+                            </p>
+                            <button onClick={() => setRegistroExitoso(false)}>
+                                Cerrar
                             </button>
+                        </div>
+                    )}
+
+                    {mensajeError && (
+                        <div className="error">
+                            <p>{mensajeError}</p>
                         </div>
                     )}
                 </Form>

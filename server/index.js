@@ -25,6 +25,8 @@ const AsignaturasRouter = require("./routes/Asignaturas");
 app.use("/asignaturas", AsignaturasRouter);
 const GrupoRouter = require("./routes/Grupo");
 app.use("/grupos", GrupoRouter);
+const SesionesRouter = require("./routes/Sesiones");
+app.use("/sesiones", SesionesRouter);
 
 db.sequelize.sync().then(() => {
     app.listen(5001, () => {

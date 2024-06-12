@@ -12,8 +12,8 @@ import CalendarioGlobal from "./pages/CalendarioGlobal";
 import LoadingIndicator from "./Components/LoadingIndicator";
 import AdminRegistration from "./pages/AdminRegistration";
 import GestionCalendarios from "./pages/GestionCalendarios";
-import GestionMatriculas from "./pages/GestionMatriculas";
-import RealizarMatricula from "./pages/RealizarMatricula";
+//import GestionMatriculas from "./pages/GestionMatriculas";
+//import RealizarMatricula from "./pages/RealizarMatricula";
 import AsignarGrupos from "./pages/AsignarGrupos";
 
 function App() {
@@ -110,10 +110,10 @@ function App() {
                             path="/calendar/calendarioglobal"
                             element={<CalendarioGlobal />}
                         />
-                        <Route
+                        {/* <Route
                             path="/matriculas/realizarmatricula"
                             element={<RealizarMatricula />}
-                        />
+                        /> */}
                         <Route
                             path="/admin/crearadmin"
                             element={<AdminRegistration />}
@@ -122,10 +122,10 @@ function App() {
                             path="/admin/gestioncalendarios"
                             element={<GestionCalendarios />}
                         />
-                        <Route
+                        {/* <Route
                             path="/admin/gestionmatriculas"
                             element={<GestionMatriculas />}
-                        />
+                        /> */}
                         <Route
                             path="/admin/asignargrupos"
                             element={<AsignarGrupos />}

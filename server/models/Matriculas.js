@@ -1,5 +1,10 @@
 module.exports = (sequelize, DataTypes) => {
     const Matriculas = sequelize.define("Matriculas", {
+        id: {
+            type: DataTypes.INTEGER,
+            autoIncrement: true,
+            primaryKey: true,
+        },
         estado: {
             type: DataTypes.STRING,
             allowNull: false,

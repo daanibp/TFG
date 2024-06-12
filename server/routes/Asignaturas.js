@@ -32,22 +32,6 @@ router.post("/addAsignatura", async (req, res) => {
     }
 });
 
-// router.post("/addLoteAsignaturas", async (req, res) => {
-//     const asignaturas = req.body;
-//     try {
-//         // Insertar todas las asignaturas en la base de datos en una sola operación
-//         await Asignaturas.bulkCreate(asignaturas);
-//         console.log("Creando las siguientes Asignaturas: ", asignaturas);
-//         console.log("Asignaturas creadas exitosamente");
-//         res.status(200).send("Asignaturas creadas exitosamente");
-//     } catch (error) {
-//         console.error("Error al crear las asignaturas:", error);
-//         res.status(500).send(
-//             "Error interno del servidor al crear las asignaturas"
-//         );
-//     }
-// });
-
 router.post("/addLoteAsignaturas", async (req, res) => {
     const asignaturas = req.body;
     const asignaturasCreadas = [];
@@ -68,15 +52,11 @@ router.post("/addLoteAsignaturas", async (req, res) => {
             }
         }
         console.log("Asignaturas creadas exitosamente: ", asignaturasCreadas);
-        // console.log(
-        //     "Asignaturas existentes y no insertadas: ",
-        //     asignaturasExistente
-        // );
-        // res.status(201).json({
-        //     message: "Asignaturas creadas exitosamente",
-        //     asignaturasCreadas,
-        //     asignaturasExistente,
-        // });
+        return res.status(201).json({
+            message: "Asignaturas creadas exitosamente",
+            asignaturasCreadas,
+            asignaturasExistente,
+        });
     } catch (error) {
         console.error("Error al crear las asignaturas:", error);
         res.status(500).send(

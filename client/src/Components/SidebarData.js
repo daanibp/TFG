@@ -24,11 +24,11 @@ export const SidebarData = ({ id }) => [
                 icon: <AiOutlineGlobal />,
                 link: "/calendar/calendarioglobal",
             },
-            {
-                title: "Matrícula",
-                icon: <SiCachet />,
-                link: "/matriculas/realizarmatricula",
-            },
+            // {
+            //     title: "Matrícula",
+            //     icon: <SiCachet />,
+            //     link: "/matriculas/realizarmatricula",
+            // },
         ],
         visible: "true",
     },
@@ -48,13 +48,13 @@ export const SidebarData = ({ id }) => [
                 icon: <FaCalendarPlus />,
                 link: "/admin/gestioncalendarios",
             },
+            // {
+            //     title: "Gestionar matrículas",
+            //     icon: <SiCachet />,
+            //     link: "/admin/gestionmatriculas",
+            // },
             {
-                title: "Gestionar matrículas",
-                icon: <SiCachet />,
-                link: "/admin/gestionmatriculas",
-            },
-            {
-                title: "Asignar grupos",
+                title: "Gestionar asignaturas y grupos",
                 icon: <SiCachet />,
                 link: "/admin/asignargrupos",
             },

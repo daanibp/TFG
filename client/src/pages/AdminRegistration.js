@@ -13,6 +13,7 @@ function AdminRegistration() {
     const [isAuthorized, setIsAuthorized] = useState(false);
     const [loading, setLoading] = useState(true);
     const [registroExitoso, setRegistroExitoso] = useState(false);
+    const [error, setError] = useState("");
     let navigate = useNavigate();
 
     useEffect(() => {
@@ -50,12 +51,24 @@ function AdminRegistration() {
             .required("La contraseña es obligatoria"),
     });
 
-    const onSubmit = (data) => {
-        axios
-            .post("http://localhost:5001/usuarios/crearadmin", data)
-            .then((response) => {
+    const onSubmit = async (data, { resetForm }) => {
+        try {
+            const response = await axios.post(
+                "http://localhost:5001/usuarios/crearadmin",
+                data
+            );
+            if (response.data === "SUCCESS") {
                 setRegistroExitoso(true);
-            });
+                setError("");
+                resetForm();
+            } else {
+                setRegistroExitoso(false);
+                setError(response.data);
+            }
+        } catch (error) {
+            setError(error.response.data.error);
+            setRegistroExitoso(false);
+        }
     };
 
     return (
@@ -81,7 +94,6 @@ function AdminRegistration() {
                                     <label>UO: </label>
                                     <ErrorMessage name="uo" component="span" />
                                     <Field
-                                        id="inputCreatePost"
                                         name="uo"
                                         placeholder="(Ex. UO111111...)"
                                     />
@@ -92,7 +104,6 @@ function AdminRegistration() {
                                     />
                                     <Field
                                         type="password"
-                                        id="inputCreatePost"
                                         name="password"
                                         placeholder="Contraseña..."
                                     />
@@ -104,18 +115,23 @@ function AdminRegistration() {
                                     </button>
 
                                     {registroExitoso && (
-                                        <div className="mensaje">
+                                        <div className="mensaje-dialogo">
                                             <p>
                                                 Has registrado un administrador
                                                 correctamente.
                                             </p>
                                             <button
-                                                onClick={() =>
-                                                    navigate("/login")
-                                                }
+                                                onClick={() => {
+                                                    setRegistroExitoso(false);
+                                                }}
                                             >
-                                                Iniciar Sesión
+                                                Cerrar
                                             </button>
+                                        </div>
+                                    )}
+                                    {error && (
+                                        <div className="error">
+                                            <p>{error}</p>
                                         </div>
                                     )}
                                 </Form>
