@@ -95,8 +95,8 @@ function AsignarGrupos() {
 
     // Función para procesar el archivo de asignaturas
     const handleCargarAsignaturas = async () => {
-        setMostrarMensajeTemporalAsignaturas(true);
         if (selectedAsignaturasFile) {
+            setMostrarMensajeTemporalAsignaturas(true);
             const dataAsignaturas = await ProcesaExcelAsignaturas(
                 selectedAsignaturasFile,
                 ["Asignaturas"]
@@ -165,13 +165,13 @@ function AsignarGrupos() {
 
     // Función para procesar el archivo de grupos
     const handleCargarGrupos = async () => {
-        setMostrarMensajeTemporalGrupos(true);
         // Verificar la existencia de asignaturas antes de cargar grupos
         const hayAsignaturas = await verificarAsignaturas();
 
         // Si hay asignaturas, continuar con la carga de grupos
         if (hayAsignaturas) {
             if (selectedGruposFile) {
+                setMostrarMensajeTemporalGrupos(true);
                 dataGrupos = await ProcesaExcelGrupos(selectedGruposFile, [
                     "Hoja1",
                 ]);

@@ -218,44 +218,63 @@ function GestionCalendarios() {
         }
     }
 
+    // Función para verificar la existencia de asignaturas en la base de datos
+    const verificarGrupos = async () => {
+        try {
+            // Si no hay asignaturas, mostrar mensaje de alerta
+            if (asignaturas.length === 0) {
+                alert("No hay grupos en la base de datos. Cárgalos primero.");
+                return false;
+            }
+            return true;
+        } catch (error) {
+            console.error("Error al verificar los grupos:", error);
+            return false;
+        }
+    };
+
     const handleScheduleFileUpload = async () => {
-        if (selectedScheduleFile) {
-            setMostrarMensajeTemporalHorarios(true);
-            // Verifica si se ha seleccionado un archivo
-            // Obtener el nombre del archivo
-            const nombreArchivo = selectedScheduleFile.name;
-            try {
-                // Determinar el cuatrimestre basado en el nombre del archivo
-                const cuatri = determinarCuatrimestre(nombreArchivo);
-                const dataHorarios = await ProcesaExcelHorarios_v2(
-                    selectedScheduleFile,
-                    [
-                        "1ITIN_A",
-                        "1ITIN_B",
-                        "2ITIN_A",
-                        "2ITIN_ING",
-                        "3ITIN_A",
-                        "4ITIN_A",
-                    ],
-                    cuatri
-                );
-                console.log("Data Horarios: ", dataHorarios);
-                for (const info of dataHorarios) {
-                    lineasProcesadas.push(info);
+        // Verificar la existencia de asignaturas antes de cargar grupos
+        const hayGrupos = await verificarGrupos();
+        if (hayGrupos) {
+            if (selectedScheduleFile) {
+                setMostrarMensajeTemporalHorarios(true);
+                // Verifica si se ha seleccionado un archivo
+                // Obtener el nombre del archivo
+                const nombreArchivo = selectedScheduleFile.name;
+                try {
+                    // Determinar el cuatrimestre basado en el nombre del archivo
+                    const cuatri = determinarCuatrimestre(nombreArchivo);
+                    const dataHorarios = await ProcesaExcelHorarios_v2(
+                        selectedScheduleFile,
+                        [
+                            "1ITIN_A",
+                            "1ITIN_B",
+                            "2ITIN_A",
+                            "2ITIN_ING",
+                            "3ITIN_A",
+                            "4ITIN_A",
+                        ],
+                        cuatri
+                    );
+                    console.log("Data Horarios: ", dataHorarios);
+                    for (const info of dataHorarios) {
+                        lineasProcesadas.push(info);
+                    }
+                    await crearSesiones();
+                    await AgregarSesiones(sesionesNuevas);
+                    setMostrarMensajeTemporalHorarios(false);
+                } catch (error) {
+                    console.error(
+                        "Error al procesar el archivo de horarios.",
+                        error
+                    );
                 }
-                await crearSesiones();
-                await AgregarSesiones(sesionesNuevas);
-                setMostrarMensajeTemporalHorarios(false);
-            } catch (error) {
-                console.error(
-                    "Error al procesar el archivo de horarios.",
-                    error
+            } else {
+                alert(
+                    "Por favor selecciona un archivo de horarios antes de subirlo."
                 );
             }
-        } else {
-            alert(
-                "Por favor selecciona un archivo de horarios antes de subirlo."
-            );
         }
     };
 
@@ -443,23 +462,27 @@ function GestionCalendarios() {
     // Función para manejar la subida del archivo de exámenes
     const handleExamFileUpload = async () => {
         try {
-            if (selectedExamFile) {
-                setMostrarMensajeTemporalExamenes(true);
-                const dataExamenes = await ProcesaExcelExamenes(
-                    selectedExamFile,
-                    ["GIITIN01"]
-                );
-                console.log("Data Examenes: ", dataExamenes);
-                for (const info of dataExamenes) {
-                    lineasProcesadasExamenes.push(info);
+            // Verificar la existencia de asignaturas antes de cargar grupos
+            const hayGrupos = await verificarGrupos();
+            if (hayGrupos) {
+                if (selectedExamFile) {
+                    setMostrarMensajeTemporalExamenes(true);
+                    const dataExamenes = await ProcesaExcelExamenes(
+                        selectedExamFile,
+                        ["GIITIN01"]
+                    );
+                    console.log("Data Examenes: ", dataExamenes);
+                    for (const info of dataExamenes) {
+                        lineasProcesadasExamenes.push(info);
+                    }
+                    await crearSesionesExamenes();
+                    await AgregarSesionesExamenes(sesionesExamenesNuevas);
+                    setMostrarMensajeTemporalExamenes(false);
+                } else {
+                    alert(
+                        "Por favor selecciona un archivo de exámenes antes de subirlo."
+                    );
                 }
-                await crearSesionesExamenes();
-                await AgregarSesionesExamenes(sesionesExamenesNuevas);
-                setMostrarMensajeTemporalExamenes(false);
-            } else {
-                alert(
-                    "Por favor selecciona un archivo de exámenes antes de subirlo."
-                );
             }
         } catch (error) {
             console.error("Error al procesar el archivo de exámenes.", error);
