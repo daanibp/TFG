@@ -139,6 +139,7 @@ router.post("/addLoteMatriculas", async (req, res) => {
         return res.status(201).json({
             message: "Matrículas creadas exitosamente",
             matriculasCreadas,
+            numeroMatriculasCreadas: matriculasCreadas.length,
         });
     } catch (error) {
         console.error("Error al crear las matrículas:", error);

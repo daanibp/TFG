@@ -115,6 +115,7 @@ function AsignarGrupos() {
                     setMensajeAsignaturas(
                         "Las asignaturas se han agregado correctamente."
                     );
+                    setMostrarMensajeTemporalAsignaturas(false);
                     setMostrarMensajeAsignaturas(true);
                 } else {
                     console.log(
@@ -124,11 +125,13 @@ function AsignarGrupos() {
                     setMensajeAsignaturas(
                         "Ya estaban todas las asignaturas cargadas en el sistema."
                     );
+                    setMostrarMensajeTemporalAsignaturas(false);
                     setMostrarMensajeAsignaturas(true);
                 }
             } catch (error) {
                 console.error("Error al agregar asignaturas:", error);
                 setMensajeAsignaturas("Error al agregar asignaturas.");
+                setMostrarMensajeTemporalAsignaturas(false);
                 setMostrarMensajeAsignaturas(true);
             }
         } else {
@@ -313,12 +316,14 @@ function AsignarGrupos() {
                     setMensajeGrupos("No se ha agregado ningún grupo nuevo.");
                 }
             } else {
+                gruposTemp = grupos;
                 console.log("Se han agregado " + Grupos.length + " grupos.");
                 setMensajeGrupos("No se ha agregado ningún grupo nuevo.");
             }
         } catch (error) {
             console.error("Error al agregar grupos:", error);
             setMensajeGrupos("Error al agregar grupos.");
+            setMostrarMensajeTemporalGrupos(false);
             setMostrarMensajeGrupos(true);
         }
     };
@@ -374,6 +379,7 @@ function AsignarGrupos() {
                     );
                 }
             } else {
+                usuariosTemp = usuarios;
                 console.log(
                     "Se han agregado " + Usuarios.length + " usuarios."
                 );
@@ -382,6 +388,7 @@ function AsignarGrupos() {
         } catch (error) {
             console.error("Error al agregar usuarios:", error);
             setMensajeGrupos("Error al agregar usuarios.");
+            setMostrarMensajeTemporalGrupos(false);
             setMostrarMensajeGrupos(true);
         }
     };
@@ -410,7 +417,9 @@ function AsignarGrupos() {
         console.log("Usuarios antes del handleMatriculas: ", usuariosTemp);
         for (const grupoInfo of dataGrupos) {
             // ID para el uo
+            console.log("Grupo info: ", grupoInfo);
             let idUsuario = obtenerIdUsuarioPorUo(grupoInfo.uo);
+            console.log("ID del usuario: ", idUsuario);
 
             // ID para la asignatura
             // Buscar la asignatura necesaria en la lista de asignaturas
@@ -525,53 +534,49 @@ function AsignarGrupos() {
             matriculasNuevas
         );
         try {
-            if (Matriculas.length !== 0) {
-                // Dividir las matrículas en lotes
-                const tamañoLote = 100;
-                const respuestas = []; // Array para almacenar todas las respuestas
-                for (let i = 0; i < Matriculas.length; i += tamañoLote) {
-                    const lote = Matriculas.slice(i, i + tamañoLote);
-                    const response = await axios.post(
-                        "http://localhost:5001/matriculas/addLoteMatriculas",
-                        lote
-                    );
-                    console.log(
-                        `Lote ${
-                            i / tamañoLote + 1
-                        } de matrículas enviado correctamente:`,
-                        response.data
-                    );
-                    respuestas.push(response.data);
-                    setMatriculas((prevMatriculas) => [
-                        ...prevMatriculas,
-                        ...lote,
-                    ]);
-                }
-                // Procesar todas las respuestas almacenadas
-                const matriculasCreadas = respuestas.reduce((total, res) => {
-                    return (
-                        total +
-                        (res.MatriculasCreadas
-                            ? res.MatriculasCreadas.length
-                            : 0)
-                    );
-                }, 0);
-                setMensajeMatriculas(
-                    "Se han agregado " +
-                        matriculasCreadas +
-                        " matrículas nuevas al sistema."
+            let matriculasC = 0;
+            // Dividir las matrículas en lotes
+            const tamañoLote = 100;
+            const respuestas = []; // Array para almacenar todas las respuestas
+            for (let i = 0; i < Matriculas.length; i += tamañoLote) {
+                const lote = Matriculas.slice(i, i + tamañoLote);
+                const response = await axios.post(
+                    "http://localhost:5001/matriculas/addLoteMatriculas",
+                    lote
                 );
-                setMostrarMensajeGrupos(true);
-            } else {
-                console.log("Se han agregado 0 matrículas.");
+                console.log(
+                    `Lote ${
+                        i / tamañoLote + 1
+                    } de matrículas enviado correctamente:`,
+                    response.data
+                );
+                matriculasC =
+                    matriculasC + response.data.numeroMatriculasCreadas;
+                respuestas.push(response.data);
+                setMatriculas((prevMatriculas) => [...prevMatriculas, ...lote]);
+            }
+            // Procesar todas las respuestas almacenadas
+            // const matriculasCreadas = respuestas.reduce((total, res) => {
+            //     return (
+            //         total +
+            //         (res.MatriculasCreadas ? res.MatriculasCreadas.length : 0)
+            //     );
+            // }, 0);
+            if (matriculasC === 0) {
                 setMensajeMatriculas(
                     "No se ha agregado ninguna matrícula nueva."
                 );
-                setMostrarMensajeGrupos(true);
+            } else {
+                setMensajeMatriculas(
+                    "Se han agregado " + matriculasC + " matrículas nuevas."
+                );
             }
+            setMostrarMensajeTemporalGrupos(false);
+            setMostrarMensajeGrupos(true);
         } catch (error) {
             console.error("Error al agregar matrículas:", error);
             setMensajeMatriculas("Error al agregar matrículas.");
+            setMostrarMensajeTemporalGrupos(false);
             setMostrarMensajeGrupos(true);
         }
     };
@@ -751,6 +756,7 @@ function AsignarGrupos() {
                                                     Procesando el archivo.{" "}
                                                     <br />
                                                     Creando grupos... <br />
+                                                    Creando usuarios... <br />
                                                     Creando matrículas... <br />
                                                     Este proceso puede tardar
                                                     unos segundos. <br />
@@ -777,8 +783,8 @@ function AsignarGrupos() {
                                     )}
                                 </div>
                                 <p>
-                                    Para cargar los grupos y las matrículas
-                                    debemos seleccionar el Excel
+                                    Para cargar los grupos, usuarios y sus
+                                    matrículas debemos seleccionar el Excel
                                     "AsignacionGruposITIN.xlsx".
                                 </p>
                             </div>
