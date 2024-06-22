@@ -1,6 +1,7 @@
 const express = require("express");
 const router = express.Router();
 const { Matriculas } = require("../models");
+const { Usuarios, Sesiones, Eventos } = require("../models");
 const { validateToken } = require("../middlewares/AuthMiddleware");
 const { Op } = require("sequelize");
 const { Grupo } = require("../models");
@@ -132,6 +133,59 @@ router.post("/addLoteMatriculas", async (req, res) => {
             });
         }
 
+        // Si son las de un profesor, creamos sus eventos
+        try {
+            if (matriculasCreadas.length > 0) {
+                // Obtener el usuario
+                const usuarioId = matriculasCreadas[0].UsuarioId;
+                const usuario = await Usuarios.findOne({
+                    where: { id: usuarioId },
+                });
+                // Solo si es profesor
+                if (!usuario.uo.startsWith("UO")) {
+                    // Borrar todos sus eventos creados previamente
+                    await Eventos.destroy({
+                        where: { UsuarioId: usuarioId },
+                    });
+
+                    // Coger todos los gruposId de esas matrículas
+                    const grupoIds = matriculasCreadas.map(
+                        (matricula) => matricula.GrupoId
+                    );
+
+                    // Obtener todas las sesiones de esos grupoIds
+                    const sesiones = await Sesiones.findAll({
+                        where: { GrupoId: { [Op.in]: grupoIds } },
+                    });
+
+                    if (!sesiones || sesiones.length === 0) {
+                        console.log(
+                            `No se encontraron sesiones para los grupos: ${grupoIds}`
+                        );
+                        return;
+                    }
+
+                    // Crear el evento para cada sesión
+                    const eventos = sesiones.map((sesion) => {
+                        // Crear un objeto evento copiando todos los campos de la sesión excepto GrupoId, y agregando UsuarioId
+                        const { id, GrupoId, ...eventoData } = sesion.toJSON();
+                        return {
+                            ...eventoData,
+                            UsuarioId: usuario.id,
+                        };
+                    });
+
+                    // Agregar los eventos
+                    await Eventos.bulkCreate(eventos);
+                }
+            }
+        } catch (error) {
+            console.error("Error al crear los eventos:", error);
+            res.status(500).send(
+                "Error interno del servidor al crear los eventos"
+            );
+        }
+
         console.log(
             "Matrículas creadas correctamente:",
             matriculasCreadas.length
@@ -146,6 +200,42 @@ router.post("/addLoteMatriculas", async (req, res) => {
         res.status(500).send(
             "Error interno del servidor al crear las matrículas"
         );
+    }
+});
+
+// Ruta para eliminar todas las matrículas de un usuario
+router.delete("/eliminarMatriculasUsuario/:UsuarioId", async (req, res) => {
+    const { UsuarioId } = req.params;
+
+    try {
+        // Buscar todas las matrículas del UsuarioId proporcionado
+        const matriculasUsuario = await Matriculas.findAll({
+            where: { UsuarioId: UsuarioId },
+        });
+
+        // Verificar si se encontraron matrículas
+        if (!matriculasUsuario || matriculasUsuario.length === 0) {
+            return res.status(404).json({
+                error: `No se encontraron matrículas para el usuario con ID ${UsuarioId}`,
+            });
+        }
+
+        // Eliminar todas las matrículas encontradas
+        await Matriculas.destroy({
+            where: { UsuarioId: UsuarioId },
+        });
+
+        console.log(
+            `Se eliminaron ${matriculasUsuario.length} matrículas del usuario con ID ${UsuarioId}`
+        );
+        res.json({
+            message: `Se eliminaron ${matriculasUsuario.length} matrículas del usuario con ID ${UsuarioId}`,
+        });
+    } catch (error) {
+        console.error("Error al eliminar las matrículas del usuario:", error);
+        res.status(500).json({
+            error: "Error interno del servidor al eliminar las matrículas del usuario",
+        });
     }
 });
 
@@ -199,6 +289,46 @@ router.get("/matriculasConGrupo", async (req, res) => {
     } catch (error) {
         console.error("Error al buscar matrículas con grupo:", error);
         res.status(500).json({ error: "Error al buscar matrículas con grupo" });
+    }
+});
+
+// Ruta para obtener todas las matrículas de un usuario
+router.get("/usuario/:UsuarioId", async (req, res) => {
+    const { UsuarioId } = req.params;
+
+    try {
+        // Buscar todas las matrículas del UsuarioId proporcionado
+        const matriculas = await Matriculas.findAll({
+            where: { UsuarioId: UsuarioId },
+            include: {
+                model: Grupo, // Incluir la información del grupo asociado
+                attributes: ["nombre"], // Obtener solo el nombre del grupo
+            },
+        });
+
+        // Verificar si se encontraron matrículas
+        if (!matriculas || matriculas.length === 0) {
+            return res.status(404).json({
+                error: `No se encontraron matrículas para el usuario con ID ${UsuarioId}`,
+            });
+        }
+
+        // Mapear los resultados para obtener la estructura deseada
+        const resultado = matriculas.map((matricula) => ({
+            MatriculaId: matricula.id,
+            UsuarioId: matricula.UsuarioId,
+            AsignaturaId: matricula.AsignaturaId,
+            GrupoId: matricula.GrupoId,
+            GrupoNombre: matricula.Grupo.nombre,
+            estado: matricula.estado,
+        }));
+
+        res.json(resultado);
+    } catch (error) {
+        console.error("Error al buscar las matrículas del usuario:", error);
+        res.status(500).json({
+            error: "Error interno del servidor al buscar las matrículas del usuario",
+        });
     }
 });
 

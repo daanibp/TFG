@@ -42,6 +42,16 @@
     display: flex;
 }
 
+.EspacioEscogerGruposProfesor {
+    display: flex;
+    margin-right: 1%;
+}
+
+.EspacioCompartirEventosAlumnos {
+    display: flex;
+    margin-right: 1%;
+}
+
 #extraGlobal {
     margin-left: 1%;
 }
@@ -74,28 +84,56 @@
     cursor: pointer;
     border: 1px solid #2F4050;
     height: 5vh;
-    width: 5vw;;
+    width: 5vw;
 }
 
 #DeleteEvent {
     cursor: pointer;
     border: 1px solid #2F4050;
     height: 5vh;
-    width: 5vw;;
+    width: 5vw;
 }
 
 #Google {
     cursor: pointer;
     border: 1px solid #2F4050;
     height: 5vh;
-    width: 5vw;;
+    width: 5vw;
 }
 
 #Apple {
     cursor: pointer;
     border: 1px solid #2F4050;
     height: 5vh;
-    width: 5vw;;
+    width: 5vw;
+}
+
+#Profesor {
+    cursor: pointer;
+    border: 1px solid #2F4050;
+    height: 5vh;
+    width: 5vw;
+}
+
+#CompartirProfesor {
+    cursor: pointer;
+    border: 1px solid #2F4050;
+    height: 5vh;
+    width: 5vw;
+}
+
+#Alumno {
+    cursor: pointer;
+    border: 1px solid #2F4050;
+    height: 5vh;
+    width: 5vw;
+}
+
+#Solicitudes {
+    cursor: pointer;
+    border: 1px solid #2F4050;
+    height: 5vh;
+    width: 5vw;
 }
 
 .txtHorCl {
@@ -113,8 +151,8 @@
 .addEvent{
     font-size: 15px;
     display: flex;
-    align-items: center; /* Centrar el contenido verticalmente */
-    justify-content: center; /* Centrar el contenido horizontalmente */
+    align-items: center;
+    justify-content: center;
 }
 
 .addEvent svg {
@@ -157,6 +195,62 @@
 }
 
 .logoApple svg {
+    font-size: 100%; /* Esto asegura que el tamaño del SVG se ajuste automáticamente */
+    max-height: 100%; /* Ajustar el tamaño máximo del SVG al 100% del contenedor */
+    transform: scale(2);
+    color: grey;
+}
+
+.logoProfesor {
+    font-size: 15px;
+    display: flex;
+    align-items: center; /* Centrar el contenido verticalmente */
+    justify-content: center; /* Centrar el contenido horizontalmente */
+}
+
+.logoProfesor svg {
+    font-size: 100%; /* Esto asegura que el tamaño del SVG se ajuste automáticamente */
+    max-height: 100%; /* Ajustar el tamaño máximo del SVG al 100% del contenedor */
+    transform: scale(2);
+    color: grey;
+}
+
+.logoCompartirProfesor {
+    font-size: 15px;
+    display: flex;
+    align-items: center; /* Centrar el contenido verticalmente */
+    justify-content: center; /* Centrar el contenido horizontalmente */
+}
+
+.logoCompartirProfesor svg {
+    font-size: 100%; /* Esto asegura que el tamaño del SVG se ajuste automáticamente */
+    max-height: 100%; /* Ajustar el tamaño máximo del SVG al 100% del contenedor */
+    transform: scale(2);
+    color: grey;
+}
+
+.logoCompartir {
+    font-size: 15px;
+    display: flex;
+    align-items: center; /* Centrar el contenido verticalmente */
+    justify-content: center; /* Centrar el contenido horizontalmente */
+}
+
+.logoCompartir svg {
+    font-size: 100%; /* Esto asegura que el tamaño del SVG se ajuste automáticamente */
+    max-height: 100%; /* Ajustar el tamaño máximo del SVG al 100% del contenedor */
+    transform: scale(2);
+    color: grey;
+}
+
+.logoVerSolicitudes {
+    font-size: 15px;
+    display: flex;
+    align-items: center; /* Centrar el contenido verticalmente */
+    justify-content: center; /* Centrar el contenido horizontalmente */
+}
+
+.logoVerSolicitudes svg {
     font-size: 100%; /* Esto asegura que el tamaño del SVG se ajuste automáticamente */
     max-height: 100%; /* Ajustar el tamaño máximo del SVG al 100% del contenedor */
     transform: scale(2);

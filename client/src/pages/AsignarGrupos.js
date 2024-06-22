@@ -555,13 +555,6 @@ function AsignarGrupos() {
                 respuestas.push(response.data);
                 setMatriculas((prevMatriculas) => [...prevMatriculas, ...lote]);
             }
-            // Procesar todas las respuestas almacenadas
-            // const matriculasCreadas = respuestas.reduce((total, res) => {
-            //     return (
-            //         total +
-            //         (res.MatriculasCreadas ? res.MatriculasCreadas.length : 0)
-            //     );
-            // }, 0);
             if (matriculasC === 0) {
                 setMensajeMatriculas(
                     "No se ha agregado ninguna matrícula nueva."

@@ -1,6 +1,6 @@
 import "./App.css";
 import axios from "axios";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { BrowserRouter as Router, Route, Link, Routes } from "react-router-dom";
 import { AuthContext } from "./helpers/AuthContext";
 import Home from "./pages/Home";
@@ -15,6 +15,7 @@ import GestionCalendarios from "./pages/GestionCalendarios";
 //import GestionMatriculas from "./pages/GestionMatriculas";
 //import RealizarMatricula from "./pages/RealizarMatricula";
 import AsignarGrupos from "./pages/AsignarGrupos";
+import { PiPersonArmsSpreadFill } from "react-icons/pi";
 
 function App() {
     const [authState, setAuthState] = useState({
@@ -24,6 +25,11 @@ function App() {
         status: false,
     });
     const [loading, setLoading] = useState(true);
+    const [showPerfil, setShowPerfil] = useState(false);
+    const [newPassword, setNewPassword] = useState("");
+    const [confirmPassword, setConfirmPassword] = useState("");
+    const [changePasswordError, setChangePasswordError] = useState("");
+    const passwordFormRef = useRef(null); // Referencia al formulario
 
     useEffect(() => {
         axios
@@ -43,6 +49,9 @@ function App() {
                         uo: response.data.uo,
                         id: response.data.id,
                         admin: response.data.admin,
+                        email: response.data.email,
+                        profesor: response.data.profesor,
+                        estado: response.data.estado,
                         status: true,
                     });
                 }
@@ -56,13 +65,67 @@ function App() {
             uo: "",
             id: 0,
             admin: false,
+
             status: false,
         });
+    };
+
+    const handleChangePassword = async (e) => {
+        e.preventDefault();
+
+        if (newPassword !== confirmPassword) {
+            setChangePasswordError("Las contraseñas no coinciden");
+            return;
+        }
+
+        try {
+            const response = await axios.put(
+                "http://localhost:5001/usuarios/changePassword",
+                { uo: authState.uo, newPassword: newPassword }
+            );
+            console.log("Respuesta del servidor:", response.data);
+            alert("Contraseña cambiada exitosamente");
+            setShowPerfil(false);
+            resetPasswordForm();
+        } catch (error) {
+            if (error.response && error.response.status === 400) {
+                setChangePasswordError(
+                    "La contraseña debe tener al menos 4 dígitos"
+                );
+            } else {
+                console.error(
+                    "Error al cambiar la contraseña:",
+                    error.response.data
+                );
+                setChangePasswordError(
+                    "Error al cambiar la contraseña. Inténtalo de nuevo más tarde."
+                );
+            }
+        }
     };
 
     if (loading) {
         return <LoadingIndicator />;
     }
+
+    const handleOpenPerfil = () => {
+        resetPasswordForm();
+        setShowPerfil((prevShowPerfil) => !prevShowPerfil);
+    };
+
+    const handleClosePerfil = () => {
+        setShowPerfil(false);
+        resetPasswordForm();
+    };
+
+    const resetPasswordForm = () => {
+        setNewPassword("");
+        setConfirmPassword("");
+        setChangePasswordError("");
+        if (passwordFormRef.current) {
+            passwordFormRef.current.reset();
+        }
+    };
 
     return (
         <div className="App">
@@ -81,7 +144,59 @@ function App() {
                             ) : (
                                 <div className="user-info">
                                     <div className="user-info-container">
-                                        <h1>{authState.uo}</h1>
+                                        <button
+                                            className="perfil-btn"
+                                            onClick={handleOpenPerfil}
+                                        >
+                                            <PiPersonArmsSpreadFill />
+                                            <h1>{authState.uo}</h1>
+                                        </button>
+                                        {showPerfil && (
+                                            <div className="perfil">
+                                                <h2>Cambiar contraseña</h2>
+                                                <form
+                                                    onSubmit={
+                                                        handleChangePassword
+                                                    }
+                                                >
+                                                    <input
+                                                        type="password"
+                                                        placeholder="Nueva contraseña"
+                                                        value={newPassword}
+                                                        onChange={(e) =>
+                                                            setNewPassword(
+                                                                e.target.value
+                                                            )
+                                                        }
+                                                    />
+                                                    <input
+                                                        type="password"
+                                                        placeholder="Confirmar contraseña"
+                                                        value={confirmPassword}
+                                                        onChange={(e) =>
+                                                            setConfirmPassword(
+                                                                e.target.value
+                                                            )
+                                                        }
+                                                    />
+                                                    <button type="submit">
+                                                        Guardar
+                                                    </button>
+                                                    {changePasswordError && (
+                                                        <p className="error-message">
+                                                            {
+                                                                changePasswordError
+                                                            }
+                                                        </p>
+                                                    )}
+                                                </form>
+                                                <button
+                                                    onClick={handleClosePerfil}
+                                                >
+                                                    Cancelar
+                                                </button>
+                                            </div>
+                                        )}
                                     </div>
                                     {authState.status && (
                                         <button

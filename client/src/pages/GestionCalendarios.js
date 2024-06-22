@@ -36,8 +36,8 @@ function GestionCalendarios() {
     //const [matriculas, setMatriculas] = useState([]);
 
     // Sesiones
-    const [sesiones, setSesiones] = useState([]);
-    const [sesionesExamenes, setSesionesExamenes] = useState([]);
+    // const [sesiones, setSesiones] = useState([]);
+    // const [sesionesExamenes, setSesionesExamenes] = useState([]);
 
     let sesionesNuevas = [];
     let sesionesExamenesNuevas = [];
@@ -75,16 +75,16 @@ function GestionCalendarios() {
             console.log("Grupos: ", response.data);
             setGrupos(response.data);
         });
-        axios.get(`http://localhost:5001/sesiones/clases`).then((response) => {
-            console.log("Sesiones de clase: ", response.data);
-            setSesiones(response.data);
-        });
-        axios
-            .get(`http://localhost:5001/sesiones/examenes`)
-            .then((response) => {
-                console.log("Sesiones de exámenes: ", response.data);
-                setSesionesExamenes(response.data);
-            });
+        // axios.get(`http://localhost:5001/sesiones/clases`).then((response) => {
+        //     console.log("Sesiones de clase: ", response.data);
+        //     setSesiones(response.data);
+        // });
+        // axios
+        //     .get(`http://localhost:5001/sesiones/examenes`)
+        //     .then((response) => {
+        //         console.log("Sesiones de exámenes: ", response.data);
+        //         setSesionesExamenes(response.data);
+        //     });
         // axios.get(`http://localhost:5001/eventos/clases`).then((response) => {
         //     console.log("Eventos: ", response.data);
         //     setEventos(response.data);
@@ -253,6 +253,7 @@ function GestionCalendarios() {
                             "2ITIN_A",
                             "2ITIN_ING",
                             "3ITIN_A",
+                            "3ITIN_A&ING",
                             "4ITIN_A",
                         ],
                         cuatri
@@ -281,7 +282,7 @@ function GestionCalendarios() {
     // Crea las sesiones a partir de los datos de la línea procesada
     const crearSesiones = async () => {
         try {
-            setSesiones([]);
+            //setSesiones([]);
             for (const lineaProcesada of lineasProcesadas) {
                 try {
                     const idGrupo = obtenerIdGrupo(lineaProcesada.grupo);
@@ -416,7 +417,6 @@ function GestionCalendarios() {
         console.log("Nuevas sesiones antes de su agregación: ", sesionesNuevas);
         try {
             const tamañoLote = 100; // Tamaño del lote
-            const respuestas = []; // Array para almacenar todas las respuestas
             let nSesionesNuevas = 0;
             // Dividir las sesiones en lotes
             for (let i = 0; i < sesionesNuevas.length; i += tamañoLote) {
@@ -431,22 +431,16 @@ function GestionCalendarios() {
                     } de sesiones enviado correctamente:`,
                     response.data
                 );
-                respuestas.push(response.data);
                 nSesionesNuevas =
                     response.data.sesionesCreadas.length + nSesionesNuevas;
             }
 
-            // Procesar todas las respuestas almacenadas
-            for (const response of respuestas) {
-                if (response.sesionesCreadas.length > 0) {
-                    setMensajeHorarios(
-                        `Se han agregado ${nSesionesNuevas} sesiones nuevas al sistema.`
-                    );
-                } else {
-                    setMensajeHorarios(
-                        "No se ha agregado ninguna sesión nueva."
-                    );
-                }
+            if (nSesionesNuevas > 0) {
+                setMensajeHorarios(
+                    `Se han agregado ${nSesionesNuevas} sesiones nuevas al sistema.`
+                );
+            } else {
+                setMensajeHorarios("No se ha agregado ninguna sesión nueva.");
             }
 
             setMostrarMensajeHorarios(true);
@@ -492,9 +486,13 @@ function GestionCalendarios() {
     // Crea las sesiones a partir de los datos de la línea procesada
     const crearSesionesExamenes = async () => {
         try {
-            setSesionesExamenes([]);
+            //setSesionesExamenes([]);
             for (const lineaProcesada of lineasProcesadasExamenes) {
                 try {
+                    // Obtener asignatura
+                    let nombreRealAsignatura = obtenerNombreRealAsignatura(
+                        lineaProcesada.asignatura
+                    );
                     // Utilizo los datos de la línea procesada para crear varias sesiones
                     let gruposId = [];
                     // Si es de tipo Teoría creas una sesion para todos los grupos de Teoría de esa asignatura
@@ -516,7 +514,7 @@ function GestionCalendarios() {
                     // Crear una sesión para cada grupo
                     for (const grupoId of gruposId) {
                         const nuevaSesion = {
-                            asunto: lineaProcesada.asignatura,
+                            asunto: nombreRealAsignatura,
                             fechaDeComienzo: lineaProcesada.fecha,
                             comienzo: lineaProcesada.hora,
                             fechaDeFinalización: lineaProcesada.fecha,
@@ -569,7 +567,6 @@ function GestionCalendarios() {
         );
         try {
             const tamañoLote = 100; // Tamaño del lote
-            const respuestas = []; // Array para almacenar todas las respuestas
             let nSesionesNuevas = 0;
             // Dividir las sesiones en lotes
             for (
@@ -588,22 +585,16 @@ function GestionCalendarios() {
                     } de sesiones enviado correctamente:`,
                     response.data
                 );
-                respuestas.push(response.data);
                 nSesionesNuevas =
                     response.data.sesionesCreadas.length + nSesionesNuevas;
             }
 
-            // Procesar todas las respuestas almacenadas
-            for (const response of respuestas) {
-                if (response.sesionesCreadas.length > 0) {
-                    setMensajeExamenes(
-                        `Se han agregado ${nSesionesNuevas} sesiones nuevas al sistema.`
-                    );
-                } else {
-                    setMensajeExamenes(
-                        "No se ha agregado ninguna sesión nueva."
-                    );
-                }
+            if (nSesionesNuevas > 0) {
+                setMensajeExamenes(
+                    `Se han agregado ${nSesionesNuevas} sesiones nuevas al sistema.`
+                );
+            } else {
+                setMensajeExamenes("No se ha agregado ninguna sesión nueva.");
             }
 
             setMostrarMensajeExamenes(true);
@@ -619,6 +610,22 @@ function GestionCalendarios() {
     };
 
     // FUNCIONES EXTRA
+
+    function obtenerNombreRealAsignatura(nombreExamen) {
+        // Buscamos la asignatura que coincida con el nombreExamen proporcionado
+        const asignatura = asignaturas.find((asignatura) => {
+            const partes = asignatura.nombreExamen.split("-");
+            const nombreExamenSinPrefijo = partes.slice(2).join("-");
+            return nombreExamenSinPrefijo === nombreExamen;
+        });
+
+        // Si se encuentra la asignatura, devolver el nombre real
+        if (asignatura) {
+            return asignatura.nombreReal;
+        } else {
+            return "Asignatura no encontrada";
+        }
+    }
 
     function obtenerGrupos(nombreAsignatura, tipo) {
         // Obtener el ID de la asignatura usando el nombre de la asignatura
@@ -881,7 +888,7 @@ function GestionCalendarios() {
                                                         <td>
                                                             {solicitud.asunto}
                                                             <button
-                                                                className="botonDetalles"
+                                                                className="botonDetalles1"
                                                                 onClick={() =>
                                                                     showSolicitudDetails(
                                                                         solicitud
@@ -924,7 +931,7 @@ function GestionCalendarios() {
                                 </div>
                             </div>
                             {selectedSolicitud && (
-                                <div className="solicitudDetails">
+                                <div className="solicitudDetails1">
                                     <h2>Detalles de la solicitud</h2>
                                     <p>ID: {selectedSolicitud.id}</p>
                                     <p>Estado: {selectedSolicitud.estado}</p>

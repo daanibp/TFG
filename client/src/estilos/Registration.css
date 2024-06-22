@@ -61,6 +61,41 @@ input {
     cursor: pointer;
 }
 
+.mensaje-dialogo-registration {
+    width: 20vw;
+    height: 15vh;
+    margin: auto;
+    padding: 20px;
+    background-color: #2F4050;
+    color: white;
+    border: 3px solid black;
+    border-radius: 8px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    overflow-y: auto;
+    position: absolute;
+    top: 55%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    z-index: 20000;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+}
+
+.mensaje-dialogo-registration button{
+    width: 50%;
+    margin-top: 2vh;
+    background-color: #2F4050;
+    color: white;
+    border: 1px solid white;
+    cursor: pointer;
+}
+
+.mensaje-dialogo-registration button:hover{
+    background-color: #253341;
+}
+
 .mensaje-dialogo {
     width: 20vw;
     height: 15vh;
@@ -78,7 +113,7 @@ input {
     transform: translate(-50%, -50%);
     z-index: 20000;
     display: flex;
-    flex-direction: column; /* Cambia la dirección de flexión a vertical */
+    flex-direction: column;
     justify-content: center;
     align-items: center;
 }

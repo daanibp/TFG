@@ -69,7 +69,7 @@ function Registration() {
                     </button>
 
                     {registroExitoso && (
-                        <div className="mensaje-dialogo">
+                        <div className="mensaje-dialogo-registration">
                             <p>
                                 Te has registrado correctamente. Por favor,
                                 revisa tu correo electrónico para validar tu

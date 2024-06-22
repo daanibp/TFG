@@ -1,8 +1,26 @@
 const express = require("express");
 const router = express.Router();
-const { Eventos } = require("../models");
+const { Eventos, EventosCompartidos } = require("../models");
 const { validateToken } = require("../middlewares/AuthMiddleware");
 const moment = require("moment");
+
+router.get("/evento/:id", async (req, res) => {
+    const { id } = req.params;
+    try {
+        // Buscar el evento compartido por el eventoId
+        const evento = await Eventos.findByPk(id);
+
+        // Verificar si el evento compartido existe
+        if (!evento) {
+            return res.status(404).json({ error: "Evento no encontrado" });
+        }
+        // Devolver la respuesta con el evento
+        return res.status(200).json(evento);
+    } catch (error) {
+        console.error("Error al buscar un evento:", error);
+        return res.status(500).json({ error: "Error interno del servidor" });
+    }
+});
 
 router.get("/clases", async (req, res) => {
     const eventos = await Eventos.findAll({
@@ -114,9 +132,6 @@ router.delete("/delete/:eventoId", async (req, res) => {
 router.post("/addLoteEventos", async (req, res) => {
     try {
         const nuevosEventos = req.body; // Array de eventos nuevos
-        // console.log("Nuevos Eventos", nuevosEventos);
-
-        // Verificar si hay eventos en la base de datos
         const eventosEnBD = await Eventos.findAll();
         let eventosAgregados = 0;
 
@@ -138,14 +153,19 @@ router.post("/addLoteEventos", async (req, res) => {
                 // Verificar si el evento nuevo ya existe en la base de datos
                 const eventoExistente = eventosEnBD.find((evento) => {
                     // Convertir las fechas de la base de datos al formato Date
-                    const fechaFormateadaBD = new Date(evento.fechaDeComienzo);
+                    const fechaFormateadaBDComienzo = new Date(
+                        evento.fechaDeComienzo
+                    );
+                    const fechaFormateadaBDFinalización = new Date(
+                        evento.fechaDeFinalización
+                    );
 
                     return (
                         evento.asunto === nuevoEvento.asunto &&
-                        fechaFormateadaBD.getTime() ===
+                        fechaFormateadaBDComienzo.getTime() ===
                             nuevoEvento.fechaDeComienzo.getTime() &&
                         evento.comienzo === nuevoEvento.comienzo &&
-                        fechaFormateadaBD.getTime() ===
+                        fechaFormateadaBDFinalización.getTime() ===
                             nuevoEvento.fechaDeFinalización.getTime() &&
                         evento.finalización === nuevoEvento.finalización &&
                         evento.todoElDía === nuevoEvento.todoElDía &&
@@ -168,28 +188,99 @@ router.post("/addLoteEventos", async (req, res) => {
 
                 // Si el evento no existe, agregarlo a la base de datos
                 if (!eventoExistente) {
-                    await Eventos.create(nuevoEvento);
-                    eventosAgregados++;
+                    try {
+                        await Eventos.create(nuevoEvento);
+                        eventosAgregados++;
+                    } catch (validationError) {
+                        console.error(
+                            "Error al agregar evento:",
+                            validationError.message
+                        );
+                        return res.status(400).json({
+                            message: "Error al agregar evento",
+                            error: validationError.message,
+                            evento: nuevoEvento,
+                        });
+                    }
                 }
             }
         }
 
         if (eventosAgregados === 0) {
             console.log(`No se agregó ningún evento`);
-            res.json({
+            return res.status(200).json({
                 message: `No se agregó ningún evento`,
+                nEventosAgregados: 0,
             });
         } else {
             console.log(
                 `Se agregaron ${eventosAgregados} eventos correctamente.`
             );
-            res.json({
+            return res.status(200).json({
                 message: `Se agregaron ${eventosAgregados} eventos correctamente.`,
+                nEventosAgregados: eventosAgregados,
             });
         }
     } catch (error) {
         console.error("Error al agregar eventos:", error.message);
         res.status(500).json({ message: "Error interno del servidor" });
+    }
+});
+
+router.delete("/deleteByUsuario/:usuarioId", async (req, res) => {
+    const usuarioId = req.params.usuarioId;
+
+    try {
+        // Verificar si hay eventos para el usuario especificado
+        const eventosAEliminar = await Eventos.findAll({
+            where: { UsuarioId: usuarioId },
+        });
+
+        if (eventosAEliminar.length === 0) {
+            return res.status(404).json({
+                message:
+                    "No se encontraron eventos para el usuario especificado",
+            });
+        }
+
+        // Eliminar los eventos
+        await Eventos.destroy({
+            where: { UsuarioId: usuarioId },
+        });
+
+        res.json({ message: "Eventos eliminados exitosamente" });
+    } catch (error) {
+        console.error("Error al eliminar los eventos:", error.message);
+        res.status(500).json({ message: "Error interno del servidor" });
+    }
+});
+
+router.get("/eventosRelacionados/:idUsuario", async (req, res) => {
+    const { idUsuario } = req.params;
+
+    try {
+        // Buscar todos los eventos compartidos relacionados con el usuario especificado
+        const eventosCompartidos = await EventosCompartidos.findAll({
+            where: {
+                UsuarioId: idUsuario,
+            },
+        });
+
+        // Obtener los IDs de los eventos compartidos para ti
+        const eventoIds = eventosCompartidos.map((evento) => evento.EventoId);
+
+        // Buscar todos los eventos que tengan los IDs encontrados y pertenezcan al usuario
+        const eventosRelacionados = await Eventos.findAll({
+            where: {
+                id: eventoIds, // Filtrar por los IDs obtenidos de EventosCompartidos
+            },
+        });
+
+        // Devolver los eventos relacionados encontrados
+        res.status(200).json(eventosRelacionados);
+    } catch (error) {
+        console.error("Error al buscar eventos relacionados:", error);
+        res.status(500).json({ error: "Error interno del servidor" });
     }
 });
 

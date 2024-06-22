@@ -217,8 +217,8 @@
     cursor: pointer;
     font-size: 20px;
 }
-.botonDetalles {
-    width: 50%;
+.botonDetalles1 {
+    width: 45%;
     height: 100%;
     background-color: #2F4050;
     color: white;
@@ -232,7 +232,7 @@
     font-size: 16px;
 }
 
-.solicitudDetails {
+.solicitudDetails1 {
     border: 1px solid #2F4050;
     background-color: #2F4050;
     width: 300px;
@@ -246,16 +246,16 @@
     text-align: center;
 }
 
-.solicitudDetails h2{
+.solicitudDetails1 h2{
     margin: 3%;
 }
 
-.solicitudDetails p {
+.solicitudDetails1 p {
     margin-left: 5%;
     margin-bottom: 1%;
 }
 
-.solicitudDetails button{
+.solicitudDetails1 button{
     margin-top: 5%;
     cursor: pointer;
     background-color: #2F4050;
@@ -264,7 +264,7 @@
     font-size: 18px;
 }
 
-.solicitudDetails button:hover {
+.solicitudDetails1 button:hover {
     background-color: #253341;
 }
 

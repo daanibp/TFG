@@ -7,8 +7,6 @@ import Sidebar from "../Components/Sidebar";
 function Home() {
     const { authState } = useContext(AuthContext);
 
-    console.log("AuthState", authState);
-
     return (
         <AuthContext.Provider value={{ authState }}>
             {!authState.status ? (

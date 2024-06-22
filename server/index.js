@@ -27,6 +27,10 @@ const GrupoRouter = require("./routes/Grupo");
 app.use("/grupos", GrupoRouter);
 const SesionesRouter = require("./routes/Sesiones");
 app.use("/sesiones", SesionesRouter);
+const EventosCompartidosRouter = require("./routes/EventosCompartidos");
+app.use("/eventoscompartidos", EventosCompartidosRouter);
+
+//app.get("/validate/:token");
 
 db.sequelize.sync().then(() => {
     app.listen(5001, () => {

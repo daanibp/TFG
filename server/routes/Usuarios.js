@@ -1,10 +1,15 @@
 const express = require("express");
 const router = express.Router();
 const { Usuarios } = require("../models");
+const { Matriculas, Sesiones, Eventos } = require("../models");
 const { validateToken } = require("../middlewares/AuthMiddleware");
 const { sign, verify } = require("jsonwebtoken");
 const bcrypt = require("bcrypt");
 const nodemailer = require("nodemailer");
+const axios = require("axios");
+const { Op } = require("sequelize");
+// import dotenv from "dotenv";
+// dotenv.config();
 
 // Configuración de Nodemailer para Outlook
 const transporter = nodemailer.createTransport({
@@ -17,53 +22,124 @@ const transporter = nodemailer.createTransport({
         user: "MiAreaPersonal@outlook.com",
         pass: "MiTFG/2024",
     },
-    // auth: {
-    //     user: "uo277476@uniovi.es",
-    //     pass: "dasdasd",
-    // },
-    tls: {
-        ciphers: "SSLv3",
-    },
+    // // tls: {
+    // //     ciphers: "SSLv3",
+    // // },
 });
+
 const jwtSecret = "importantsecret";
+const apiKey = "DgDdU7mwgJSgsGZFemrziHpKdJcQUJDDMxBbC3wc9ZOapyjHStf66vqxZlX4";
+// const transporter = nodemailer.createTransport({
+//     host: process.env.EMAIL_HOST,
+//     port: 465,
+//     secure: true,
+//     auth: {
+//         user: process.env.EMAIL_USER,
+//         pass: process.env.EMAIL_PASSWORD,
+//     },
+// });
+
+async function getShortenedUrl(longUrl) {
+    const response = await axios.post(
+        "https://api.tinyurl.com/create",
+        {
+            url: longUrl,
+            domain: "tinyurl.com",
+        },
+        {
+            headers: {
+                Authorization: `Bearer ${apiKey}`,
+                "Content-Type": "application/json",
+            },
+        }
+    );
+    return response.data.data.tiny_url;
+}
 
 router.post("/register", async (req, res) => {
     const { uo, newPassword } = req.body;
 
     try {
-        const user = await Usuarios.findOne({ where: { uo: uo } });
+        // PROFESOR
+        if (!uo.startsWith("UO")) {
+            const hashedPassword = await bcrypt.hash(newPassword, 10);
+            const token = sign({ uo: uo }, jwtSecret, { expiresIn: "1h" });
+            const validationUrl = `http://localhost:5001/usuarios/validate/${token}`;
+            const shortUrl = await getShortenedUrl(validationUrl);
 
-        if (!user) {
-            return res
-                .status(400)
-                .json({ error: "Usuario no registrado en el sistema" });
-        }
+            // Es un profesor y hay que crearle una cuenta
+            await Usuarios.create({
+                uo: uo,
+                password: hashedPassword,
+                //email: `${uo}@uniovi.es`,
+                email: "uo277476@uniovi.es",
+                admin: 0,
+                profesor: true,
+                estado: "Pendiente",
+            });
 
-        const hashedPassword = await bcrypt.hash(newPassword, 10);
-        const token = sign({ uo: uo }, jwtSecret, { expiresIn: "1h" });
+            const mailOptions = {
+                from: "MiAreaPersonal@outlook.com",
+                //to: `${uo}@uniovi.es`,
+                to: "uo277476@uniovi.es",
+                subject: "Validación de cuenta",
+                text: `Haz clic en el siguiente enlace para validar tu cuenta: ${shortUrl}`,
+            };
 
-        await Usuarios.update(
-            { password: hashedPassword, estado: "Pendiente" },
-            { where: { uo: uo } }
-        );
-
-        const mailOptions = {
-            from: "MiAreaPersonal@outlook.com",
-            to: user.email,
-            subject: "Validación de cuenta",
-            text: `Haz clic en el siguiente enlace para validar tu cuenta: http://localhost:5001/usuarios/validate/${token}`,
-        };
-
-        transporter.sendMail(mailOptions, (error, info) => {
-            if (error) {
+            transporter.sendMail(mailOptions, (error, info) => {
+                if (error) {
+                    return res.status(500).json({
+                        error: "Error al enviar el correo de validación",
+                    });
+                }
                 return res
-                    .status(500)
-                    .json({ error: "Error al enviar el correo de validación" });
+                    .status(200)
+                    .json({ message: "Correo de validación enviado" });
+            });
+        } else {
+            const user = await Usuarios.findOne({ where: { uo: uo } });
+
+            if (!user) {
+                return res
+                    .status(400)
+                    .json({ error: "Usuario no registrado en el sistema." });
             }
-            return res
-                .status(200)
-                .json({ message: "Correo de validación enviado" });
-        });
+
+            if (user.estado === "Activa") {
+                return res.status(400).json({
+                    error: "Este usuario ya está registrado en el sistema.",
+                });
+            }
+
+            const hashedPassword = await bcrypt.hash(newPassword, 10);
+            const token = sign({ uo: uo }, jwtSecret, { expiresIn: "1h" });
+            const validationUrl = `http://localhost:5001/usuarios/validate/${token}`;
+            const shortUrl = await getShortenedUrl(validationUrl);
+            // Usuario existente, actualizar la contraseña y estado
+            await Usuarios.update(
+                { password: hashedPassword, estado: "Pendiente" },
+                { where: { uo: uo } }
+            );
+
+            const mailOptions = {
+                from: "MiAreaPersonal@outlook.com",
+                to: "uo277476@uniovi.es",
+                // to: user.email,
+                subject: "Validación de cuenta",
+                text: `Haz clic en el siguiente enlace para validar tu cuenta: ${shortUrl}`,
+            };
+
+            transporter.sendMail(mailOptions, (error, info) => {
+                if (error) {
+                    return res.status(500).json({
+                        error: "Error al enviar el correo de validación",
+                    });
+                }
+                return res
+                    .status(200)
+                    .json({ message: "Correo de validación enviado" });
+            });
+        }
     } catch (error) {
         console.error("Error en el servidor:", error);
         res.status(500).json({ error: "Error en el servidor" });
@@ -77,36 +153,128 @@ router.get("/validate/:token", async (req, res) => {
     try {
         // Verificar y decodificar el token
         const decoded = verify(token, jwtSecret);
+        console.log("Decoded: ", decoded);
         const { uo } = decoded;
+        console.log("UO: ", uo);
+
+        // Obtener el usuario
+        const usuario = await Usuarios.findOne({ where: { uo: uo } });
 
         // Actualizar el estado del usuario a "Activa"
         await Usuarios.update({ estado: "Activa" }, { where: { uo: uo } });
+
+        // Crear eventos para el usuario
+        if (usuario.uo.startsWith("UO")) {
+            await createEventsForUser(uo);
+        }
 
         // Responder al usuario con un mensaje de éxito
         res.status(200).send(
             "Cuenta activada correctamente. Ahora puedes iniciar sesión."
         );
     } catch (error) {
+        console.error("Error verifying token: ", error); // Log the error
         // Manejar errores de token inválido o caducado
-        res.status(400).send(
-            "Enlace de validación inválido o caducado. Por favor, solicita un nuevo enlace."
-        );
+        if (error.name === "TokenExpiredError") {
+            res.status(400).send(
+                "El token ha expirado. Por favor, solicita un nuevo enlace."
+            );
+        } else if (error.name === "JsonWebTokenError") {
+            res.status(400).send(
+                "Token inválido. Por favor, solicita un nuevo enlace."
+            );
+        } else {
+            res.status(500).send(
+                "Error en el servidor. Por favor, intenta nuevamente más tarde."
+            );
+        }
     }
 });
 
+async function createEventsForUser(uo) {
+    try {
+        // Obtener el usuario
+        const usuario = await Usuarios.findOne({ where: { uo: uo } });
+
+        if (!usuario) {
+            console.log(`No se encontró el usuario con UO: ${uo}`);
+            return;
+        }
+
+        console.log("Usuario: ", usuario);
+
+        // Coger todas las matrículas de ese usuario
+        const matriculas = await Matriculas.findAll({
+            where: { UsuarioId: usuario.id },
+            attributes: ["GrupoId"],
+        });
+
+        console.log("Matrículas: ", matriculas);
+
+        if (!matriculas || matriculas.length === 0) {
+            console.log(`No se encontraron matrículas para el usuario: ${uo}`);
+            return;
+        }
+
+        // Coger todos los gruposId de esas matrículas
+        const grupoIds = matriculas.map((matricula) => matricula.GrupoId);
+
+        // Obtener todas las sesiones de esos grupoIds
+        const sesiones = await Sesiones.findAll({
+            where: { GrupoId: { [Op.in]: grupoIds } },
+        });
+
+        if (!sesiones || sesiones.length === 0) {
+            console.log(
+                `No se encontraron sesiones para los grupos: ${grupoIds}`
+            );
+            return;
+        }
+
+        // Crear el evento para cada sesión
+        const eventos = sesiones.map((sesion) => {
+            // Crear un objeto evento copiando todos los campos de la sesión excepto GrupoId, y agregando UsuarioId
+            const { id, GrupoId, ...eventoData } = sesion.toJSON();
+            return {
+                ...eventoData,
+                UsuarioId: usuario.id,
+            };
+        });
+
+        // Agregar los eventos
+        await Eventos.bulkCreate(eventos);
+
+        console.log(`Eventos creados correctamente para el usuario: ${uo}`);
+    } catch (error) {
+        console.error("Error creando eventos para el usuario: ", error);
+    }
+}
+
 router.post("/", async (req, res) => {
     const { uo, password, profesor, estado } = req.body;
-    bcrypt.hash(password, 10).then((hash) => {
-        Usuarios.create({
+
+    try {
+        // Generar el hash de la contraseña
+        const hash = await bcrypt.hash(password, 10);
+
+        // Crear el usuario en la base de datos
+        await Usuarios.create({
             uo: uo,
             password: hash,
-            email: uo + "@uniovi.es",
+            email: `${uo}@uniovi.es`,
             admin: 0,
             profesor: profesor,
             estado: estado,
         });
-        res.json("SUCCESS");
-    });
+
+        // Enviar respuesta al cliente
+        res.json({ message: "Usuario creado exitosamente." });
+    } catch (error) {
+        console.error("Error al crear usuario:", error);
+        res.status(500).json({
+            error: "Error interno del servidor al crear usuario.",
+        });
+    }
 });
 
 router.post("/login", async (req, res) => {
@@ -291,6 +459,39 @@ router.post("/addLoteUsuarios/alumnos/inactivos", async (req, res) => {
         return res
             .status(500)
             .send("Error interno del servidor al crear los usuarios");
+    }
+});
+
+router.put("/changePassword", async (req, res) => {
+    const { uo, newPassword } = req.body;
+
+    try {
+        // Validar que la nueva contraseña sea válida
+        if (!newPassword || newPassword.length < 4) {
+            return res.status(400).json({
+                error: "La contraseña debe tener al menos 4 caracteres",
+            });
+        }
+
+        // Generar el hash de la nueva contraseña
+        const hashedPassword = await bcrypt.hash(newPassword, 10);
+
+        // Actualizar la contraseña en la base de datos
+        const updatedUser = await Usuarios.update(
+            { password: hashedPassword },
+            { where: { uo: uo } }
+        );
+
+        if (updatedUser[0] === 0) {
+            return res.status(404).json({ error: "Usuario no encontrado" });
+        }
+
+        res.status(200).json({
+            message: "Contraseña actualizada exitosamente",
+        });
+    } catch (error) {
+        console.error("Error al cambiar la contraseña:", error);
+        res.status(500).json({ error: "Error interno del servidor" });
     }
 });
 

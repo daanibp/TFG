@@ -14,6 +14,15 @@ import { TiDelete } from "react-icons/ti";
 import Papa from "papaparse";
 import utc from "dayjs/plugin/utc";
 import timezone from "dayjs/plugin/timezone";
+import { GiTeacher } from "react-icons/gi";
+import MatricularProfesor from "../Components/MatricularProfesor";
+import { MdOutlineIosShare } from "react-icons/md";
+import CompartirEventos from "../Components/CompartirEventos";
+import { FaEye } from "react-icons/fa";
+import VerSolicitudes from "../Components/VerSolicitudes";
+import { BsClipboard2PlusFill } from "react-icons/bs";
+//import LoadingIndicator from "../Components/LoadingIndicator";
+//import { AiOutlineLoading3Quarters } from "react-icons/ai";
 
 dayjs.extend(utc);
 dayjs.extend(timezone);
@@ -32,6 +41,25 @@ function CalendarioEscolar() {
     const [mostrarFormulario, setMostrarFormulario] = useState(false);
     const [mostrarMensajeAñadido, setMostrarMensajeAñadido] = useState(false);
     const [borrarEvento, setBorrarEvento] = useState(false);
+    const [mostrarProfesor, setMostrarProfesor] = useState(false);
+    const [mostrarCompartir, setMostrarCompartir] = useState(false);
+    const [mostrarSolicitudes, setMostrarSolicitudes] = useState(false);
+    const [mostrarCompartirProfesor, setMostrarCompartirProfesor] =
+        useState(false);
+
+    const [asignaturas, setAsignaturas] = useState([]);
+    const [grupos, setGrupos] = useState([]);
+    const [gruposSeleccionados, setGruposSeleccionados] = useState({});
+    const [asignaturasSeleccionadas, setAsignaturasSeleccionadas] = useState(
+        []
+    );
+    const [usuarios, setUsuarios] = useState([]);
+    const [matriculas, setMatriculas] = useState([]);
+    //const [eventosCompartidos, setEventosCompartidos] = useState([]);
+    const [eventosCompartidosParaTi, setEventosCompartidosParaTi] = useState(
+        []
+    );
+    const [eventosArg, setEventosArg] = useState([]);
 
     let navigate = useNavigate();
 
@@ -55,6 +83,7 @@ function CalendarioEscolar() {
     };
 
     useEffect(() => {
+        console.log("AuthState: ", authState);
         axios.get(`http://localhost:5001/eventos/${id}`).then((response) => {
             console.log("Clases: ", response.data);
             setEventos(response.data);
@@ -63,7 +92,62 @@ function CalendarioEscolar() {
             console.log("Examenes: ", response.data);
             setEventosExamenes(response.data);
         });
-    }, [id]);
+        axios.get(`http://localhost:5001/asignaturas`).then((response) => {
+            console.log("Asignaturas: ", response.data);
+            setAsignaturas(response.data);
+        });
+        axios.get(`http://localhost:5001/grupos`).then((response) => {
+            console.log("Grupos: ", response.data);
+            setGrupos(response.data);
+        });
+        axios
+            .get(`http://localhost:5001/grupos/usuario/${id}/grupos`)
+            .then((response) => {
+                console.log("Grupos Seleccionados: ", response.data);
+                setGruposSeleccionados(response.data);
+            });
+        axios
+            .get(`http://localhost:5001/usuarios/allUsers/all`)
+            .then((response) => {
+                console.log("Usuarios: ", response.data);
+                setUsuarios(response.data);
+            });
+        axios
+            .get(`http://localhost:5001/asignaturas/usuario/${id}/asignaturas`)
+            .then((response) => {
+                console.log("Asignaturas Seleccionadas: ", response.data);
+                setAsignaturasSeleccionadas(response.data);
+            });
+        axios.get(`http://localhost:5001/matriculas`).then((response) => {
+            console.log("Matrículas: ", response.data);
+            setMatriculas(response.data);
+        });
+        // axios
+        //     .get(
+        //         `http://localhost:5001/eventoscompartidos/allEventosCompartidos`
+        //     )
+        //     .then((response) => {
+        //         console.log("Eventos Compartidos: ", response.data);
+        //         setEventosCompartidos(response.data);
+        //     });
+        axios
+            .get(
+                `http://localhost:5001/eventoscompartidos/getEventosCompartidos/toUsuario/${id}`
+            )
+            .then((response) => {
+                console.log("Eventos Compartidos Para Ti: ", response.data);
+                setEventosCompartidosParaTi(response.data);
+            });
+        axios
+            .get(`http://localhost:5001/eventos/eventosRelacionados/${id}`)
+            .then((response) => {
+                console.log(
+                    "EventosArg que se quieren compartir para ti: ",
+                    response.data
+                );
+                setEventosArg(response.data);
+            });
+    }, [id, authState]);
 
     // Función para manejar el clic en los botones
     const handleTipoEventosClick = (tipo) => {
@@ -131,33 +215,73 @@ function CalendarioEscolar() {
     //console.log("EventosFormateados", eventosFormateados); // aquí se consiguen bien bien
 
     const mostrarOcultarMensaje = useCallback(
-        (tipoMensaje) => {
+        async (tipoMensaje) => {
+            // // Tiempo predeterminado para ocultar el mensaje de carga
+            // const tiempoEspera = 100; // Tiempo en milisegundos
+
+            // // Mostrar mensaje de carga
+            // setCargando(true);
             switch (tipoMensaje) {
                 case "Google":
                     setMostrarMensajeG(
                         (prevMostrarMensajeG) => !prevMostrarMensajeG
                     );
                     setMostrarMensajeA(false);
+
                     break;
                 case "Apple":
                     setMostrarMensajeA(
                         (prevMostrarMensajeA) => !prevMostrarMensajeA
                     );
                     setMostrarMensajeG(false);
+
                     break;
                 case "Añadir":
                     setMostrarFormulario(
                         (prevMostrarFormulario) => !prevMostrarFormulario
                     );
                     setBorrarEvento(false);
+
                     break;
                 case "Borrar":
                     setBorrarEvento((prevBorrarEvento) => !prevBorrarEvento);
                     setMostrarFormulario(false);
+
+                    break;
+                case "Profesor":
+                    setMostrarProfesor(
+                        (prevMostrarProfesor) => !prevMostrarProfesor
+                    );
+                    setMostrarCompartirProfesor(false);
+
+                    break;
+                case "CompartirProfesor":
+                    setMostrarCompartirProfesor(
+                        (prevMostrarCompartirProfesor) =>
+                            !prevMostrarCompartirProfesor
+                    );
+                    setMostrarProfesor(false);
+
+                    break;
+                case "Alumno":
+                    setMostrarCompartir(
+                        (prevMostrarCompartir) => !prevMostrarCompartir
+                    );
+                    setMostrarSolicitudes(false);
+                    break;
+                case "Solicitudes":
+                    setMostrarSolicitudes(
+                        (prevMostrarSolicitudes) => !prevMostrarSolicitudes
+                    );
+                    setMostrarCompartir(false);
                     break;
                 default:
                     break;
             }
+            // Desactivar el estado de carga después de un tiempo de espera
+            // setTimeout(() => {
+            //     setCargando(false);
+            // }, tiempoEspera);
         },
         [setMostrarMensajeG, setMostrarMensajeA]
     );
@@ -295,6 +419,56 @@ function CalendarioEscolar() {
         }
     };
 
+    // Función que se ejecutará al cerrar MatricularProfesor
+    const handleCerrarMatricularProfesor = async () => {
+        console.log("Se ejecutó la función al cerrar MatricularProfesor");
+        await axios
+            .get(`http://localhost:5001/grupos/usuario/${id}/grupos`)
+            .then((response) => {
+                console.log("Grupos Seleccionados: ", response.data);
+                setGruposSeleccionados(response.data);
+            });
+        setMostrarProfesor(false);
+    };
+
+    // Función que se ejecutará al cerrar VerSolicitudes
+    const handleCerrarVerSolicitudes = async () => {
+        console.log("Se ejecutó la función al cerrar Ver Solicitudes");
+        axios
+            .get(
+                `http://localhost:5001/eventoscompartidos/getEventosCompartidos/toUsuario/${id}`
+            )
+            .then((response) => {
+                console.log("Eventos Compartidos Para Ti: ", response.data);
+                setEventosCompartidosParaTi(response.data);
+            });
+        axios
+            .get(`http://localhost:5001/eventos/eventosRelacionados/${id}`)
+            .then((response) => {
+                console.log(
+                    "EventosArg que se quieren compartir para ti: ",
+                    response.data
+                );
+                setEventosArg(response.data);
+            });
+        setMostrarSolicitudes(false);
+    };
+
+    // Función que se ejecutará al cerrar VerSolicitudes
+    const handleCerrarCompartirEventos = async () => {
+        console.log("Se ejecutó la función al cerrar Compartir Eventos");
+        axios.get(`http://localhost:5001/eventos/${id}`).then((response) => {
+            console.log("Clases: ", response.data);
+            setEventos(response.data);
+        });
+        axios.get(`http://localhost:5001/eventos/ex/${id}`).then((response) => {
+            console.log("Examenes: ", response.data);
+            setEventosExamenes(response.data);
+        });
+        setMostrarCompartir(false);
+        setMostrarCompartirProfesor(false);
+    };
+
     return (
         <AuthContext.Provider value={{ authState }}>
             {!authState.status ? (
@@ -363,9 +537,9 @@ function CalendarioEscolar() {
                                 </button>
                                 <button
                                     id="DeleteEvent"
-                                    onClick={() =>
-                                        mostrarOcultarMensaje("Borrar")
-                                    }
+                                    onClick={() => {
+                                        mostrarOcultarMensaje("Borrar");
+                                    }}
                                 >
                                     <div className="deleteEvent">
                                         <TiDelete />
@@ -431,6 +605,120 @@ function CalendarioEscolar() {
                                 <MessageBoxApple
                                     message="Para importar el horario a iOS Calendar debes importarlo a Google Calendar primero y sincronizar tus cuentas."
                                     onCancel={() => setMostrarMensajeA(false)}
+                                />
+                            )}
+
+                            {authState.profesor && (
+                                <div className="EspacioEscogerGruposProfesor">
+                                    <button
+                                        onClick={() =>
+                                            mostrarOcultarMensaje("Profesor")
+                                        }
+                                        id="Profesor"
+                                    >
+                                        <div className="logoProfesor">
+                                            <BsClipboard2PlusFill />
+                                        </div>
+                                    </button>
+                                    <button
+                                        onClick={() =>
+                                            mostrarOcultarMensaje(
+                                                "CompartirProfesor"
+                                            )
+                                        }
+                                        id="CompartirProfesor"
+                                    >
+                                        <div className="logoCompartirProfesor">
+                                            <GiTeacher />
+                                        </div>
+                                    </button>
+                                </div>
+                            )}
+                            {mostrarProfesor && (
+                                <MatricularProfesor
+                                    asignaturas={asignaturas}
+                                    grupos={grupos}
+                                    gruposSeleccionadosProp={
+                                        gruposSeleccionados.grupos
+                                    }
+                                    idUsuario={id}
+                                    onCerrarMatricularProfesor={
+                                        handleCerrarMatricularProfesor
+                                    }
+                                />
+                            )}
+                            {mostrarCompartirProfesor && (
+                                <CompartirEventos
+                                    idUsuario={id}
+                                    eventosClases={eventos}
+                                    eventosExamenes={eventosExamenes}
+                                    gruposSeleccionados={gruposSeleccionados}
+                                    matriculas={matriculas}
+                                    usuariosArg={usuarios}
+                                    asignaturasSeleccionadas={
+                                        asignaturasSeleccionadas
+                                    }
+                                    profesor={authState.profesor}
+                                    onCerrarCompartirEventos={
+                                        handleCerrarCompartirEventos
+                                    }
+                                />
+                            )}
+
+                            {!authState.profesor && (
+                                <div className="EspacioCompartirEventosAlumnos">
+                                    <button
+                                        onClick={() =>
+                                            mostrarOcultarMensaje("Alumno")
+                                        }
+                                        id="Alumno"
+                                    >
+                                        <div className="logoCompartir">
+                                            <MdOutlineIosShare />
+                                        </div>
+                                    </button>
+                                    <button
+                                        onClick={() =>
+                                            mostrarOcultarMensaje("Solicitudes")
+                                        }
+                                        id="Solicitudes"
+                                    >
+                                        <div className="logoVerSolicitudes">
+                                            <FaEye />
+                                        </div>
+                                    </button>
+                                </div>
+                            )}
+                            {mostrarCompartir && (
+                                <CompartirEventos
+                                    idUsuario={id}
+                                    eventosClases={eventos}
+                                    eventosExamenes={eventosExamenes}
+                                    gruposSeleccionados={gruposSeleccionados}
+                                    matriculas={matriculas}
+                                    usuariosArg={usuarios}
+                                    asignaturasSeleccionadas={
+                                        asignaturasSeleccionadas
+                                    }
+                                    profesor={authState.profesor}
+                                    onCerrarCompartirEventos={
+                                        handleCerrarCompartirEventos
+                                    }
+                                />
+                            )}
+                            {mostrarSolicitudes && (
+                                <VerSolicitudes
+                                    idUsuario={id}
+                                    // eventosClases={eventos}
+                                    // eventosExamenes={eventosExamenes}
+                                    eventosArg={eventosArg}
+                                    eventosCompartidos={
+                                        eventosCompartidosParaTi
+                                    }
+                                    usuariosArg={usuarios}
+                                    onCerrarVerSolicitudes={
+                                        handleCerrarVerSolicitudes
+                                    }
                                 />
                             )}
                         </div>
