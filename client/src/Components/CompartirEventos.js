@@ -16,8 +16,8 @@ function CompartirEventos({
     const [tipoEvento, setTipoEvento] = useState("Clase");
     const [tipoFiltroAsignaturas, setTipoFiltroAsignatura] = useState("Todas");
     const [filtroAsignatura, setFiltroAsignatura] = useState([]);
-    //const [tipoFiltroGrupos, setTipoFiltroGrupos] = useState("Todos");
-    const [filtroGrupos, setFiltroGrupos] = useState([]);
+    const [tipoFiltroGrupos, setTipoFiltroGrupos] = useState("Todos");
+    //const [filtroGrupos, setFiltroGrupos] = useState([]);
 
     const [usuariosSeleccionados, setUsuariosSeleccionados] = useState([]);
     const [eventosSeleccionados, setEventosSeleccionados] = useState([]);
@@ -44,19 +44,6 @@ function CompartirEventos({
     const handleSearchTextUsuarioSeleccionadoChange = (event) => {
         setSearchTextUsuarioSeleccionado(event.target.value);
     };
-
-    // const usuariosFiltrados = usuarios
-    //     // Filtrar usuarios que no sean profesor ni admin
-    //     .filter((usuario) => {
-    //         if (!grupos || grupos.length === 0) {
-    //             return false;
-    //         }
-    //         return !usuario.profesor && !usuario.admin;
-    //     })
-    //     // Filtrar usuarios por el texto de búsqueda
-    //     .filter((usuario) =>
-    //         usuario.uo.toLowerCase().startsWith(searchText.toLowerCase())
-    //     );
 
     const usuariosFiltrados = usuarios.filter((usuario) => {
         if (!grupos || grupos.length === 0) {
@@ -129,9 +116,18 @@ function CompartirEventos({
     const handleTipoEventoChange = (event) => {
         const selectedTipoEvento = event.target.value;
         setTipoEvento(selectedTipoEvento);
-        setEventos(
-            selectedTipoEvento === "Clase" ? eventosClases : eventosExamenes
-        );
+
+        if (selectedTipoEvento === "Clase") {
+            setEventos(eventosClases);
+        } else if (selectedTipoEvento === "Examen") {
+            setEventos(eventosExamenes);
+        } else if (selectedTipoEvento === "Creados por mi") {
+            setEventos(
+                [...eventosClases, ...eventosExamenes].filter(
+                    (evento) => evento.creadoPorMi
+                )
+            );
+        }
     };
 
     const handleUsuarioSeleccionado = (usuario) => {
@@ -170,48 +166,9 @@ function CompartirEventos({
         );
     };
 
-    // const handleGrupoChange = (event) => {
-    //     const selectedTipoFiltro = event.target.value;
-    //     //setTipoFiltroGrupos(selectedTipoFiltro);
-    //     if (selectedTipoFiltro === "Todos") {
-    //         // Filtrar los usuarios que no están seleccionados
-    //         const usuariosNoSeleccionados = usuariosArg.filter(
-    //             (usuario) =>
-    //                 !usuariosSeleccionados.some((u) => u.id === usuario.id)
-    //         );
-    //         //setFiltroGrupos([selectedTipoFiltro]);
-    //         setUsuarios(usuariosNoSeleccionados);
-    //     } else {
-    //         // Filtrar usuarios según el grupo seleccionado
-    //         const grupoSeleccionado = gruposSeleccionados.grupos.find(
-    //             (grupo) => grupo.nombre === selectedTipoFiltro
-    //         );
-    //         console.log(grupoSeleccionado);
-
-    //         if (grupoSeleccionado) {
-    //             setFiltroGrupos([selectedTipoFiltro]);
-    //             const usuariosFiltrados = usuariosArg.filter((usuario) =>
-    //                 matriculas.some(
-    //                     (matricula) =>
-    //                         matricula.GrupoId === grupoSeleccionado.id &&
-    //                         matricula.UsuarioId === usuario.id
-    //                 )
-    //             );
-
-    //             // Filtrar los usuarios que no están seleccionados
-    //             const usuariosNoSeleccionados = usuariosFiltrados.filter(
-    //                 (usuario) =>
-    //                     !usuariosSeleccionados.some((u) => u.id === usuario.id)
-    //             );
-
-    //             console.log(usuariosNoSeleccionados);
-    //             setUsuarios(usuariosNoSeleccionados);
-    //         }
-    //     }
-    // };
-
     const handleGrupoChange = (event) => {
         const selectedTipoFiltro = event.target.value;
+        setTipoFiltroGrupos(selectedTipoFiltro);
 
         if (selectedTipoFiltro === "Todos") {
             // Mostrar todos los usuarios no seleccionados
@@ -220,7 +177,7 @@ function CompartirEventos({
                     !usuariosSeleccionados.some((u) => u.id === usuario.id)
             );
             setUsuarios(usuariosNoSeleccionados);
-            setFiltroGrupos([]); // Limpiar filtro de grupos
+            //setFiltroGrupos([]); // Limpiar filtro de grupos
         } else {
             // Filtrar usuarios según el grupo seleccionado
             const grupoSeleccionado = gruposSeleccionados.grupos.find(
@@ -244,11 +201,11 @@ function CompartirEventos({
                 );
 
                 setUsuarios(usuariosNoSeleccionados);
-                setFiltroGrupos([selectedTipoFiltro]); // Establecer filtro de grupo seleccionado
+                //setFiltroGrupos([selectedTipoFiltro]); // Establecer filtro de grupo seleccionado
             } else {
                 // Limpiar usuarios si no se encuentra el grupo seleccionado
                 setUsuarios([]);
-                setFiltroGrupos([]);
+                //setFiltroGrupos([]);
             }
         }
     };
@@ -435,6 +392,7 @@ function CompartirEventos({
                 <select id="tipoEvento" onChange={handleTipoEventoChange}>
                     <option value="Clase">Clase</option>
                     <option value="Examen">Examen</option>
+                    <option value="Creados por mi">Creados por mi</option>
                 </select>
                 <label htmlFor="filtroAsignatura">
                     Filtrar por Asignatura:
@@ -442,7 +400,7 @@ function CompartirEventos({
                 <select
                     id="filtroAsignatura"
                     onChange={handleAsignaturaChange}
-                    value={filtroAsignatura}
+                    value={tipoFiltroAsignaturas}
                 >
                     {asignaturasSeleccionadas &&
                     asignaturas &&
@@ -510,7 +468,7 @@ function CompartirEventos({
                 <select
                     id="filtroGrupos"
                     onChange={handleGrupoChange}
-                    value={filtroGrupos}
+                    value={tipoFiltroGrupos}
                 >
                     {gruposSeleccionados && grupos && grupos.length > 0 ? (
                         <>
@@ -536,13 +494,13 @@ function CompartirEventos({
                     placeholder="UO..."
                 />
 
-                {!grupos || grupos.length === 0 ? (
+                {!gruposSeleccionados.grupos ||
+                gruposSeleccionados.grupos.length === 0 ||
+                (usuariosFiltrados.length === 0 && !searchText) ? (
                     <p>No hay ningún usuario para seleccionar</p>
                 ) : (
                     <div>
-                        {grupos &&
-                        grupos.length > 0 &&
-                        usuariosFiltrados.length === 0 ? (
+                        {usuariosFiltrados.length === 0 && searchText ? (
                             <p>
                                 No se encontraron usuarios que coincidan con la
                                 búsqueda

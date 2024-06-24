@@ -61,6 +61,7 @@ router.post("/addLoteSesiones", async (req, res) => {
                     sesion.sensitivity === nuevaSesion.sensitivity &&
                     sesion.showTimeAs === nuevaSesion.showTimeAs.toString() &&
                     sesion.examen === nuevaSesion.examen &&
+                    sesion.creadaPorMi === nuevaSesion.creadaPorMi &&
                     sesion.grupoId === nuevaSesion.grupoId
                 );
             });

@@ -47,7 +47,7 @@ function AñadirEvento({ id, onAgregarEvento, tipo, isGlobal }) {
         horaComienzo: Yup.string(),
         horaFinalizacion: Yup.string(),
         organizador: Yup.string(),
-        descripción: Yup.string(),
+        descripción: Yup.string().required("La descricpión es requerida"),
         prioridad: Yup.string().oneOf(["Baja", "Normal", "Alta"]),
         sensibilidad: Yup.string().oneOf(["Baja", "Normal", "Alta"]),
         Tipo: Yup.string(),
@@ -175,6 +175,7 @@ function AñadirEvento({ id, onAgregarEvento, tipo, isGlobal }) {
                     showTimeAs: 2,
                     examen: examenValue,
                     global: data.Global,
+                    creadoPorMi: true,
                     UsuarioId: id,
                 }
             );
@@ -208,12 +209,16 @@ function AñadirEvento({ id, onAgregarEvento, tipo, isGlobal }) {
                 validationSchema={validationSchema}
             >
                 <Form>
-                    <label>Asunto:</label>
+                    <label>Asunto: *</label>
                     <Field type="text" name="asunto" />
-                    <ErrorMessage name="asunto" component="div" />
+                    <ErrorMessage
+                        name="asunto"
+                        component="div"
+                        className="error-messageF"
+                    />
 
                     <div className="Fechas">
-                        <label>Fecha de Comienzo:</label>
+                        <label>Fecha de Comienzo: *</label>
                         <DatePicker
                             selected={fechaComienzo}
                             onChange={(date) =>
@@ -229,7 +234,7 @@ function AñadirEvento({ id, onAgregarEvento, tipo, isGlobal }) {
                         </div>
 
                         <div className="HoraComienzo">
-                            <label>Hora de Comienzo:</label>
+                            <label>Hora de Comienzo: *</label>
                             <Field
                                 as="select"
                                 name="HorasComienzo"
@@ -270,7 +275,7 @@ function AñadirEvento({ id, onAgregarEvento, tipo, isGlobal }) {
                     </div>
 
                     <div className="Fechas">
-                        <label>Fecha de Finalización:</label>
+                        <label>Fecha de Finalización: *</label>
                         <DatePicker
                             selected={fechaFinalización}
                             onChange={(date) =>
@@ -286,7 +291,7 @@ function AñadirEvento({ id, onAgregarEvento, tipo, isGlobal }) {
                         </div>
 
                         <div className="HoraFinalización">
-                            <label>Hora de Finalización:</label>
+                            <label>Hora de Finalización: *</label>
                             <Field
                                 as="select"
                                 name="HorasFinalización"
@@ -325,6 +330,14 @@ function AñadirEvento({ id, onAgregarEvento, tipo, isGlobal }) {
                             </div>
                         </div>
                     </div>
+
+                    <label>Descripción: *</label>
+                    <Field type="text" name="descripción" />
+                    <ErrorMessage
+                        name="descripción"
+                        component="div"
+                        className="error-messageF"
+                    />
 
                     <div>
                         <label>
@@ -405,9 +418,6 @@ function AñadirEvento({ id, onAgregarEvento, tipo, isGlobal }) {
 
                     <label>Organizador:</label>
                     <Field type="text" name="organizador" />
-
-                    <label>Descripción:</label>
-                    <Field type="text" name="descripción" />
 
                     <label>Prioridad:</label>
                     <Field as="select" name="prioridad">

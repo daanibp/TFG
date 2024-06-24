@@ -1,6 +1,6 @@
 const express = require("express");
 const router = express.Router();
-const { SolicitudEvento } = require("../models");
+const { SolicitudEvento, NotificacionesGlobales } = require("../models");
 const { validateToken } = require("../middlewares/AuthMiddleware");
 
 router.get("/", async (req, res) => {
@@ -63,6 +63,11 @@ router.post("/addSolicitudEvento", async (req, res) => {
         sensitivity,
         showTimeAs,
         UsuarioId,
+    });
+    // Crear la notificacion
+    await NotificacionesGlobales.create({
+        vista: false,
+        SolicitudEventoId: nuevaSolicitudEvento.id,
     });
     res.json(nuevaSolicitudEvento);
 });

@@ -93,7 +93,7 @@ module.exports = (sequelize, DataTypes) => {
             type: DataTypes.STRING,
             allowNull: false,
         },
-        solicitudEventoId: {
+        SolicitudEventoId: {
             type: DataTypes.INTEGER,
             allowNull: false,
         },
@@ -101,7 +101,8 @@ module.exports = (sequelize, DataTypes) => {
 
     EventosGlobales.associate = (models) => {
         EventosGlobales.belongsTo(models.SolicitudEvento, {
-            foreignKey: "solicitudEventoId",
+            foreignKey: "SolicitudEventoId",
+            as: "solicitudEvento",
             onDelete: "CASCADE",
         });
     };

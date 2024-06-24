@@ -97,6 +97,10 @@ module.exports = (sequelize, DataTypes) => {
             type: DataTypes.BOOLEAN,
             allowNull: false,
         },
+        creadoPorMi: {
+            type: DataTypes.BOOLEAN,
+            allowNull: false,
+        },
         GrupoId: {
             type: DataTypes.INTEGER,
             allowNull: false,

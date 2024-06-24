@@ -97,11 +97,21 @@ module.exports = (sequelize, DataTypes) => {
             type: DataTypes.BOOLEAN,
             allowNull: false,
         },
+        creadoPorMi: {
+            type: DataTypes.BOOLEAN,
+            allowNull: false,
+        },
         UsuarioId: {
             type: DataTypes.INTEGER,
             allowNull: false,
         },
     });
+
+    Eventos.associate = (models) => {
+        Eventos.belongsTo(models.Usuarios, {
+            foreignKey: "UsuarioId",
+        });
+    };
 
     return Eventos;
 };

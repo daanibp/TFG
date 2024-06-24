@@ -27,6 +27,12 @@ module.exports = (sequelize, DataTypes) => {
         Matriculas.belongsTo(models.Grupo, {
             foreignKey: "GrupoId",
         });
+        Matriculas.belongsTo(models.Usuarios, {
+            foreignKey: "UsuarioId",
+        });
+        Matriculas.belongsTo(models.Asignaturas, {
+            foreignKey: "AsignaturaId",
+        });
     };
 
     return Matriculas;

@@ -76,6 +76,7 @@ router.post("/addEvent", async (req, res) => {
         sensitivity,
         showTimeAs,
         examen,
+        creadoPorMi,
         UsuarioId,
     } = req.body;
 
@@ -103,6 +104,7 @@ router.post("/addEvent", async (req, res) => {
         sensitivity,
         showTimeAs,
         examen,
+        creadoPorMi,
         UsuarioId,
     });
     res.json(nuevoEvento);
@@ -182,6 +184,7 @@ router.post("/addLoteEventos", async (req, res) => {
                         evento.showTimeAs ===
                             nuevoEvento.showTimeAs.toString() &&
                         evento.examen === nuevoEvento.examen &&
+                        evento.creadoPorMi === nuevoEvento.creadoPorMi &&
                         evento.UsuarioId === nuevoEvento.UsuarioId
                     );
                 });

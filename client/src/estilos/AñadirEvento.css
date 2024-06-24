@@ -47,6 +47,11 @@ select {
     background-color: #45a049;
 }
 
+.error-messageF {
+    color: red;
+    margin-bottom: 2%;
+}
+
 .Errores {
     color: rgb(238, 95, 95); 
     font-size: 14px;

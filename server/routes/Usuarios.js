@@ -15,45 +15,58 @@ const { Op } = require("sequelize");
 const transporter = nodemailer.createTransport({
     host: "smtp.office365.com", // Servidor SMTP de Outlook
     port: 587,
-    // host: "relay.uniovi.es",
-    // port: 25,
     secure: false, // true para el puerto 465, false para otros puertos
     auth: {
         user: "MiAreaPersonal@outlook.com",
         pass: "MiTFG/2024",
     },
-    // // tls: {
-    // //     ciphers: "SSLv3",
-    // // },
 });
 
 const jwtSecret = "importantsecret";
 const apiKey = "DgDdU7mwgJSgsGZFemrziHpKdJcQUJDDMxBbC3wc9ZOapyjHStf66vqxZlX4";
-// const transporter = nodemailer.createTransport({
-//     host: process.env.EMAIL_HOST,
-//     port: 465,
-//     secure: true,
-//     auth: {
-//         user: process.env.EMAIL_USER,
-//         pass: process.env.EMAIL_PASSWORD,
-//     },
-// });
+const bitlyApiKey = "56bfdd8350ea0e7a55cd40f082063d42727b8fc8";
 
 async function getShortenedUrl(longUrl) {
-    const response = await axios.post(
-        "https://api.tinyurl.com/create",
-        {
-            url: longUrl,
-            domain: "tinyurl.com",
-        },
-        {
-            headers: {
-                Authorization: `Bearer ${apiKey}`,
-                "Content-Type": "application/json",
+    try {
+        // Try TinyURL first
+        const tinyUrlResponse = await axios.post(
+            "https://api.tinyurl.com/create",
+            {
+                url: longUrl,
+                domain: "tinyurl.com",
             },
+            {
+                headers: {
+                    Authorization: `Bearer ${apiKey}`,
+                    "Content-Type": "application/json",
+                },
+            }
+        );
+        return tinyUrlResponse.data.data.tiny_url;
+    } catch (tinyUrlError) {
+        console.error("TinyURL falló, intentando Bitly:", tinyUrlError);
+
+        // If TinyURL fails, try Bitly
+        try {
+            const bitlyResponse = await axios.post(
+                "https://api-ssl.bitly.com/v4/shorten",
+                {
+                    long_url: longUrl,
+                    domain: "bit.ly",
+                },
+                {
+                    headers: {
+                        Authorization: `Bearer ${bitlyApiKey}`,
+                        "Content-Type": "application/json",
+                    },
+                }
+            );
+            return bitlyResponse.data.link;
+        } catch (bitlyError) {
+            console.error("Bitly también falló:", bitlyError);
+            res.status(500).json({ error: "Error creando una URL más corta" });
         }
-    );
-    return response.data.data.tiny_url;
+    }
 }
 
 router.post("/register", async (req, res) => {

@@ -122,14 +122,6 @@ function CalendarioEscolar() {
             console.log("Matrículas: ", response.data);
             setMatriculas(response.data);
         });
-        // axios
-        //     .get(
-        //         `http://localhost:5001/eventoscompartidos/allEventosCompartidos`
-        //     )
-        //     .then((response) => {
-        //         console.log("Eventos Compartidos: ", response.data);
-        //         setEventosCompartidos(response.data);
-        //     });
         axios
             .get(
                 `http://localhost:5001/eventoscompartidos/getEventosCompartidos/toUsuario/${id}`

@@ -46,7 +46,7 @@ function SolicitarEventoGlobal({ onSolicitarEvento, userId }) {
         horaComienzo: Yup.string(),
         horaFinalizacion: Yup.string(),
         organizador: Yup.string(),
-        descripción: Yup.string(),
+        descripción: Yup.string().required("La descricpión es requerido"),
         prioridad: Yup.string().oneOf(["Baja", "Normal", "Alta"]),
         sensibilidad: Yup.string().oneOf(["Baja", "Normal", "Alta"]),
     });
@@ -203,7 +203,11 @@ function SolicitarEventoGlobal({ onSolicitarEvento, userId }) {
                     </h1>
                     <label>Asunto:</label>
                     <Field type="text" name="asunto" />
-                    <ErrorMessage name="asunto" component="div" />
+                    <ErrorMessage
+                        name="asunto"
+                        component="div"
+                        className="error-messageF"
+                    />
 
                     <div className="Fechas">
                         <label>Fecha de Comienzo:</label>
@@ -319,6 +323,14 @@ function SolicitarEventoGlobal({ onSolicitarEvento, userId }) {
                         </div>
                     </div>
 
+                    <label>Descripción:</label>
+                    <Field type="text" name="descripción" />
+                    <ErrorMessage
+                        name="descripción"
+                        component="div"
+                        className="error-messageF"
+                    />
+
                     <div>
                         <label>
                             Todo el Día
@@ -398,9 +410,6 @@ function SolicitarEventoGlobal({ onSolicitarEvento, userId }) {
 
                     <label>Organizador:</label>
                     <Field type="text" name="organizador" />
-
-                    <label>Descripción:</label>
-                    <Field type="text" name="descripción" />
 
                     <label>Prioridad:</label>
                     <Field as="select" name="prioridad">

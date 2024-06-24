@@ -29,6 +29,10 @@ const SesionesRouter = require("./routes/Sesiones");
 app.use("/sesiones", SesionesRouter);
 const EventosCompartidosRouter = require("./routes/EventosCompartidos");
 app.use("/eventoscompartidos", EventosCompartidosRouter);
+const Notificaciones = require("./routes/Notificaciones");
+app.use("/notificaciones", Notificaciones);
+const NotificacionesGlobales = require("./routes/NotificacionesGlobales");
+app.use("/notificacionesglobales", NotificacionesGlobales);
 
 //app.get("/validate/:token");
 

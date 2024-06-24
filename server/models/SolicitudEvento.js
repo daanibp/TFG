@@ -104,8 +104,18 @@ module.exports = (sequelize, DataTypes) => {
     });
 
     SolicitudEvento.associate = (models) => {
+        SolicitudEvento.belongsTo(models.Usuarios, {
+            foreignKey: "UsuarioId",
+            as: "usuarioCreador",
+        });
         SolicitudEvento.hasOne(models.EventosGlobales, {
-            foreignKey: "solicitudEventoId",
+            foreignKey: "SolicitudEventoId",
+            as: "eventoGlobal",
+        });
+        SolicitudEvento.hasMany(models.NotificacionesGlobales, {
+            foreignKey: "SolicitudEventoId",
+            onDelete: "cascade",
+            as: "notificacionesGlobales",
         });
     };
 

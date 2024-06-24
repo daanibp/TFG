@@ -50,6 +50,12 @@ module.exports = (sequelize, DataTypes) => {
             foreignKey: "EventoId",
             as: "evento",
         });
+
+        EventosCompartidos.hasMany(models.Notificaciones, {
+            foreignKey: "EventosCompartidoId",
+            onDelete: "cascade",
+            as: "notificaciones",
+        });
     };
 
     return EventosCompartidos;

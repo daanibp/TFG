@@ -1,6 +1,6 @@
 const express = require("express");
 const router = express.Router();
-const { EventosCompartidos, Eventos } = require("../models");
+const { EventosCompartidos, Eventos, Notificaciones } = require("../models");
 const { validateToken } = require("../middlewares/AuthMiddleware");
 
 router.post("/addEventosCompartidos", async (req, res) => {
@@ -21,6 +21,11 @@ router.post("/addEventosCompartidos", async (req, res) => {
                 // El evento compartido no existe, insertarlo en la base de datos
                 const eventoCreado = await EventosCompartidos.create(evento);
                 eventosCreados.push(eventoCreado);
+                // Crear la notificacion
+                await Notificaciones.create({
+                    vista: false,
+                    EventosCompartidoId: eventoCreado.id,
+                });
             } else {
                 // El evento compartido ya existe, agregarlo a la lista de eventos existentes
                 eventosExistentes.push(eventoExistente);

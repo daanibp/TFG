@@ -309,6 +309,7 @@ function GestionCalendarios() {
                         sensitivity: "Normal",
                         showTimeAs: 2,
                         examen: false,
+                        creadoPorMi: false,
                         GrupoId: idGrupo,
                     };
                     //console.log("Nueva Sesión: ", nuevaSesion);
@@ -537,6 +538,7 @@ function GestionCalendarios() {
                             sensitivity: "Normal",
                             showTimeAs: 2,
                             examen: true,
+                            creadoPorMi: false,
                             GrupoId: grupoId,
                         };
                         //console.log("Nueva Sesión: ", nuevaSesion);
