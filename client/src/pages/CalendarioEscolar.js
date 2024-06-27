@@ -63,6 +63,134 @@ function CalendarioEscolar() {
 
     let navigate = useNavigate();
 
+    // useEffect(async () => {
+    //     console.log("AuthState: ", authState);
+    //     axios
+    //         .get(`http://localhost:5001/eventos/${id}`)
+    //         .then((response) => {
+    //             console.log("Clases: ", response.data);
+    //             setEventos(response.data);
+    //         });
+    //     axios
+    //         .get(`http://localhost:5001/eventos/ex/${id}`)
+    //         .then((response) => {
+    //             console.log("Examenes: ", response.data);
+    //             setEventosExamenes(response.data);
+    //         });
+    //     axios
+    //         .get(`http://localhost:5001/asignaturas`)
+    //         .then((response) => {
+    //             console.log("Asignaturas: ", response.data);
+    //             setAsignaturas(response.data);
+    //         });
+    //     axios.get(`http://localhost:5001/grupos`).then((response) => {
+    //         console.log("Grupos: ", response.data);
+    //         setGrupos(response.data);
+    //     });
+    //     axios
+    //         .get(`http://localhost:5001/grupos/usuario/${id}/grupos`)
+    //         .then((response) => {
+    //             console.log("Grupos Seleccionados: ", response.data);
+    //             setGruposSeleccionados(response.data);
+    //         });
+    //     axios
+    //         .get(`http://localhost:5001/usuarios/allUsers/all`)
+    //         .then((response) => {
+    //             console.log("Usuarios: ", response.data);
+    //             setUsuarios(response.data);
+    //         });
+    //     axios
+    //         .get(`http://localhost:5001/asignaturas/usuario/${id}/asignaturas`)
+    //         .then((response) => {
+    //             console.log("Asignaturas Seleccionadas: ", response.data);
+    //             setAsignaturasSeleccionadas(response.data);
+    //         });
+    //     axios.get(`http://localhost:5001/matriculas`).then((response) => {
+    //         console.log("Matrículas: ", response.data);
+    //         setMatriculas(response.data);
+    //     });
+    //     axios
+    //         .get(
+    //             `http://localhost:5001/eventoscompartidos/getEventosCompartidos/toUsuario/${id}`
+    //         )
+    //         .then((response) => {
+    //             console.log("Eventos Compartidos Para Ti: ", response.data);
+    //             setEventosCompartidosParaTi(response.data);
+    //         });
+    //     axios
+    //         .get(`http://localhost:5001/eventos/eventosRelacionados/${id}`)
+    //         .then((response) => {
+    //             console.log(
+    //                 "EventosArg que se quieren compartir para ti: ",
+    //                 response.data
+    //             );
+    //             setEventosArg(response.data);
+    //         });
+    // }, [id, authState]);
+    useEffect(() => {
+        const fetchData = async () => {
+            try {
+                console.log("AuthState: ", authState);
+
+                const [
+                    eventosResponse,
+                    eventosExamenesResponse,
+                    asignaturasResponse,
+                    gruposResponse,
+                    gruposSeleccionadosResponse,
+                    usuariosResponse,
+                    asignaturasSeleccionadasResponse,
+                    matriculasResponse,
+                    eventosCompartidosParaTiResponse,
+                    eventosArgResponse,
+                ] = await Promise.all([
+                    axios.get(`http://localhost:5001/eventos/${id}`),
+                    axios.get(`http://localhost:5001/eventos/ex/${id}`),
+                    axios.get(`http://localhost:5001/asignaturas`),
+                    axios.get(`http://localhost:5001/grupos`),
+                    axios.get(
+                        `http://localhost:5001/grupos/usuario/${id}/grupos`
+                    ),
+                    axios.get(`http://localhost:5001/usuarios/allUsers/all`),
+                    axios.get(
+                        `http://localhost:5001/asignaturas/usuario/${id}/asignaturas`
+                    ),
+                    axios.get(`http://localhost:5001/matriculas`),
+                    axios.get(
+                        `http://localhost:5001/eventoscompartidos/getEventosCompartidos/toUsuario/${id}`
+                    ),
+                    axios.get(
+                        `http://localhost:5001/eventos/eventosRelacionados/${id}`
+                    ),
+                ]);
+
+                setEventos(eventosResponse.data);
+                setEventosExamenes(eventosExamenesResponse.data);
+                setAsignaturas(asignaturasResponse.data);
+                setGrupos(gruposResponse.data);
+                setGruposSeleccionados(gruposSeleccionadosResponse.data);
+                setUsuarios(usuariosResponse.data);
+                setAsignaturasSeleccionadas(
+                    asignaturasSeleccionadasResponse.data
+                );
+                setMatriculas(matriculasResponse.data);
+                setEventosCompartidosParaTi(
+                    eventosCompartidosParaTiResponse.data
+                );
+                setEventosArg(eventosArgResponse.data);
+            } catch (error) {
+                console.error("Error fetching data: ", error);
+            }
+        };
+
+        fetchData();
+    }, [id, authState]);
+
+    // Función para manejar el clic en los botones
+    const handleTipoEventosClick = (tipo) => {
+        setMostrarTipoEventos(tipo);
+    };
+
     const MessageBoxGoogle = ({ message, onConfirm, onCancel }) => {
         return (
             <div className="message-box">
@@ -80,70 +208,6 @@ function CalendarioEscolar() {
                 <button onClick={onCancel}>Vale</button>
             </div>
         );
-    };
-
-    useEffect(() => {
-        console.log("AuthState: ", authState);
-        axios.get(`http://localhost:5001/eventos/${id}`).then((response) => {
-            console.log("Clases: ", response.data);
-            setEventos(response.data);
-        });
-        axios.get(`http://localhost:5001/eventos/ex/${id}`).then((response) => {
-            console.log("Examenes: ", response.data);
-            setEventosExamenes(response.data);
-        });
-        axios.get(`http://localhost:5001/asignaturas`).then((response) => {
-            console.log("Asignaturas: ", response.data);
-            setAsignaturas(response.data);
-        });
-        axios.get(`http://localhost:5001/grupos`).then((response) => {
-            console.log("Grupos: ", response.data);
-            setGrupos(response.data);
-        });
-        axios
-            .get(`http://localhost:5001/grupos/usuario/${id}/grupos`)
-            .then((response) => {
-                console.log("Grupos Seleccionados: ", response.data);
-                setGruposSeleccionados(response.data);
-            });
-        axios
-            .get(`http://localhost:5001/usuarios/allUsers/all`)
-            .then((response) => {
-                console.log("Usuarios: ", response.data);
-                setUsuarios(response.data);
-            });
-        axios
-            .get(`http://localhost:5001/asignaturas/usuario/${id}/asignaturas`)
-            .then((response) => {
-                console.log("Asignaturas Seleccionadas: ", response.data);
-                setAsignaturasSeleccionadas(response.data);
-            });
-        axios.get(`http://localhost:5001/matriculas`).then((response) => {
-            console.log("Matrículas: ", response.data);
-            setMatriculas(response.data);
-        });
-        axios
-            .get(
-                `http://localhost:5001/eventoscompartidos/getEventosCompartidos/toUsuario/${id}`
-            )
-            .then((response) => {
-                console.log("Eventos Compartidos Para Ti: ", response.data);
-                setEventosCompartidosParaTi(response.data);
-            });
-        axios
-            .get(`http://localhost:5001/eventos/eventosRelacionados/${id}`)
-            .then((response) => {
-                console.log(
-                    "EventosArg que se quieren compartir para ti: ",
-                    response.data
-                );
-                setEventosArg(response.data);
-            });
-    }, [id, authState]);
-
-    // Función para manejar el clic en los botones
-    const handleTipoEventosClick = (tipo) => {
-        setMostrarTipoEventos(tipo);
     };
 
     // Obtener los eventos según el tipo seleccionado
@@ -200,6 +264,7 @@ function CalendarioEscolar() {
                 .toDate(),
             title: evento.asunto,
             descripcion: evento.description,
+            creadoPorMi: evento.creadoPorMi,
         });
     });
 
@@ -420,13 +485,25 @@ function CalendarioEscolar() {
                 console.log("Grupos Seleccionados: ", response.data);
                 setGruposSeleccionados(response.data);
             });
+        await axios
+            .get(`http://localhost:5001/eventos/${id}`)
+            .then((response) => {
+                console.log("Clases: ", response.data);
+                setEventos(response.data);
+            });
+        await axios
+            .get(`http://localhost:5001/eventos/ex/${id}`)
+            .then((response) => {
+                console.log("Examenes: ", response.data);
+                setEventosExamenes(response.data);
+            });
         setMostrarProfesor(false);
     };
 
     // Función que se ejecutará al cerrar VerSolicitudes
     const handleCerrarVerSolicitudes = async () => {
         console.log("Se ejecutó la función al cerrar Ver Solicitudes");
-        axios
+        await axios
             .get(
                 `http://localhost:5001/eventoscompartidos/getEventosCompartidos/toUsuario/${id}`
             )
@@ -434,7 +511,7 @@ function CalendarioEscolar() {
                 console.log("Eventos Compartidos Para Ti: ", response.data);
                 setEventosCompartidosParaTi(response.data);
             });
-        axios
+        await axios
             .get(`http://localhost:5001/eventos/eventosRelacionados/${id}`)
             .then((response) => {
                 console.log(
@@ -449,14 +526,18 @@ function CalendarioEscolar() {
     // Función que se ejecutará al cerrar VerSolicitudes
     const handleCerrarCompartirEventos = async () => {
         console.log("Se ejecutó la función al cerrar Compartir Eventos");
-        axios.get(`http://localhost:5001/eventos/${id}`).then((response) => {
-            console.log("Clases: ", response.data);
-            setEventos(response.data);
-        });
-        axios.get(`http://localhost:5001/eventos/ex/${id}`).then((response) => {
-            console.log("Examenes: ", response.data);
-            setEventosExamenes(response.data);
-        });
+        await axios
+            .get(`http://localhost:5001/eventos/${id}`)
+            .then((response) => {
+                console.log("Clases: ", response.data);
+                setEventos(response.data);
+            });
+        await axios
+            .get(`http://localhost:5001/eventos/ex/${id}`)
+            .then((response) => {
+                console.log("Examenes: ", response.data);
+                setEventosExamenes(response.data);
+            });
         setMostrarCompartir(false);
         setMostrarCompartirProfesor(false);
     };

@@ -16,6 +16,10 @@
     z-index: 10000;
 }
 
+.TituloAñadirEvento {
+    margin-bottom: 5%;
+}
+
 .containerFormulario label {
     display: block;
     margin-bottom: 8px;

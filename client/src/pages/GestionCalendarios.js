@@ -526,7 +526,7 @@ function GestionCalendarios() {
                             reminderTime: "10:00:00",
                             meetingOrganizer: "Uniovi",
                             description:
-                                "Exámen - " +
+                                "Examen - " +
                                 lineaProcesada.asignatura +
                                 "(" +
                                 lineaProcesada.tipo +

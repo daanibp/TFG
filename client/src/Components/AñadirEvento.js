@@ -203,6 +203,9 @@ function AñadirEvento({ id, onAgregarEvento, tipo, isGlobal }) {
 
     return (
         <div className="containerFormulario">
+            <div className="TituloAñadirEvento">
+                <h1>Añadir Evento</h1>
+            </div>
             <Formik
                 initialValues={initialValues}
                 onSubmit={onSubmit}

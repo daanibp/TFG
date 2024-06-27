@@ -171,15 +171,15 @@ router.get("/validate/:token", async (req, res) => {
         console.log("UO: ", uo);
 
         // Obtener el usuario
-        const usuario = await Usuarios.findOne({ where: { uo: uo } });
+        //const usuario = await Usuarios.findOne({ where: { uo: uo } });
 
         // Actualizar el estado del usuario a "Activa"
         await Usuarios.update({ estado: "Activa" }, { where: { uo: uo } });
 
         // Crear eventos para el usuario
-        if (usuario.uo.startsWith("UO")) {
-            await createEventsForUser(uo);
-        }
+        // if (usuario.uo.startsWith("UO")) {
+        //     await createEventsForUser(uo);
+        // }
 
         // Responder al usuario con un mensaje de éxito
         res.status(200).send(
@@ -254,10 +254,18 @@ async function createEventsForUser(uo) {
             };
         });
 
-        // Agregar los eventos
-        await Eventos.bulkCreate(eventos);
-
-        console.log(`Eventos creados correctamente para el usuario: ${uo}`);
+        // Agregar los eventos que no existan
+        const response = await axios.post(
+            `http://localhost:5001/eventos/addLoteEventos`,
+            eventos
+        );
+        if (response.data.nEventosAgregados === 0) {
+            console.log(
+                `Todos los eventos ya estaban creados para el usuario: ${uo}`
+            );
+        } else {
+            console.log(`Eventos creados correctamente para el usuario: ${uo}`);
+        }
     } catch (error) {
         console.error("Error creando eventos para el usuario: ", error);
     }
@@ -293,22 +301,25 @@ router.post("/", async (req, res) => {
 router.post("/login", async (req, res) => {
     const { uo, password } = req.body;
 
-    const user = await Usuarios.findOne({ where: { uo: uo } });
+    try {
+        const user = await Usuarios.findOne({ where: { uo: uo } });
 
-    if (!user) return res.json({ error: "No existe este usuario" });
+        if (!user) return res.json({ error: "No existe este usuario" });
 
-    // Verificar el estado de la cuenta del usuario
-    if (user.estado !== "Activa") {
-        return res.json({
-            error: "La cuenta de este usuario no está activa. Regístrate.",
-        });
-    }
+        // Verificar el estado de la cuenta del usuario
+        if (user.estado !== "Activa") {
+            return res.json({
+                error: "La cuenta de este usuario no está activa. Regístrate.",
+            });
+        }
 
-    bcrypt.compare(password, user.password).then((match) => {
-        if (!match)
+        const match = await bcrypt.compare(password, user.password);
+
+        if (!match) {
             return res.json({
                 error: "Usuario o contraseña erróneos",
             });
+        }
 
         const accessToken = sign(
             {
@@ -322,6 +333,11 @@ router.post("/login", async (req, res) => {
             "importantsecret"
         );
 
+        // Crear eventos para el usuario
+        if (user.uo.startsWith("UO")) {
+            await createEventsForUser(uo);
+        }
+
         return res.json({
             token: accessToken,
             uo: uo,
@@ -331,7 +347,10 @@ router.post("/login", async (req, res) => {
             profesor: user.profesor,
             estado: user.estado,
         });
-    });
+    } catch (error) {
+        console.error("Error durante el proceso de inicio de sesión: ", error);
+        return res.status(500).json({ error: "Error interno del servidor" });
+    }
 });
 
 router.get("/auth", validateToken, (req, res) => {
