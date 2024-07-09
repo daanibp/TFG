@@ -218,7 +218,7 @@ async function createEventsForUser(uo) {
 
         // Coger todas las matrículas de ese usuario
         const matriculas = await Matriculas.findAll({
-            where: { UsuarioId: usuario.id },
+            where: { UsuarioId: usuario.id, ver: true },
             attributes: ["GrupoId"],
         });
 
@@ -250,16 +250,27 @@ async function createEventsForUser(uo) {
             const { id, GrupoId, ...eventoData } = sesion.toJSON();
             return {
                 ...eventoData,
+                eliminado: false,
+                eliminadoPorUsuario: false,
                 UsuarioId: usuario.id,
             };
         });
 
-        // Agregar los eventos que no existan
-        const response = await axios.post(
-            `http://localhost:5001/eventos/addLoteEventos`,
-            eventos
-        );
-        if (response.data.nEventosAgregados === 0) {
+        const tamañoLote = 100; // Tamaño del lote
+        let nEventosNuevos = 0;
+        // Dividir los eventos en lotes
+        for (let i = 0; i < eventos.length; i += tamañoLote) {
+            const lote = eventos.slice(i, i + tamañoLote);
+            // Agregar los eventos que no existan
+            const response = await axios.post(
+                `http://localhost:5001/eventos/addLoteEventos`,
+                lote
+            );
+
+            nEventosNuevos = response.data.nEventosAgregados + nEventosNuevos;
+        }
+
+        if (nEventosNuevos === 0) {
             console.log(
                 `Todos los eventos ya estaban creados para el usuario: ${uo}`
             );
@@ -267,7 +278,7 @@ async function createEventsForUser(uo) {
             console.log(`Eventos creados correctamente para el usuario: ${uo}`);
         }
     } catch (error) {
-        console.error("Error creando eventos para el usuario: ", error);
+        console.error(`Error creando eventos para el usuario: ${uo}`, error);
     }
 }
 

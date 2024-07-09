@@ -101,6 +101,14 @@ module.exports = (sequelize, DataTypes) => {
             type: DataTypes.BOOLEAN,
             allowNull: false,
         },
+        eliminado: {
+            type: DataTypes.BOOLEAN,
+            allowNull: false,
+        },
+        eliminadoPorUsuario: {
+            type: DataTypes.BOOLEAN,
+            allowNull: false,
+        },
         UsuarioId: {
             type: DataTypes.INTEGER,
             allowNull: false,

@@ -31,13 +31,6 @@ function MatricularProfesor({
         if (!gruposSeleccionados.some((g) => g.nombre === grupo.nombre)) {
             setGruposSeleccionados([...gruposSeleccionados, grupo]);
         }
-        // } else {
-        //     // Si ya está seleccionado, quitarlo de la lista
-        //     const nuevosGrupos = gruposSeleccionados.filter(
-        //         (item) => item !== grupo
-        //     );
-        //     setGruposSeleccionados(nuevosGrupos);
-        // }
     };
 
     const gruposAsignaturaSeleccionada = asignaturaSeleccionada
@@ -73,6 +66,7 @@ function MatricularProfesor({
         await BorrarMatriculas();
         const matriculas = gruposSeleccionados.map((grupo) => ({
             estado: "Pendiente",
+            ver: true,
             UsuarioId: idUsuario,
             AsignaturaId: grupo.AsignaturaId,
             GrupoId: grupo.id,

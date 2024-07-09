@@ -222,7 +222,11 @@ function CalendarioGlobal() {
         URL.revokeObjectURL(url);
 
         // Abre una nueva pestaña de Google Calendar
-        window.open("https://calendar.google.com/", "_blank");
+        //window.open("https://calendar.google.com/", "_blank");
+        window.open(
+            "https://calendar.google.com/calendar/u/0/r/settings/export",
+            "_blank"
+        );
     };
 
     // Función para solicitar un evento global

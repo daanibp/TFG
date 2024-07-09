@@ -24,21 +24,6 @@ function GestionCalendarios() {
     const [asignaturas, setAsignaturas] = useState([]);
     const [grupos, setGrupos] = useState([]);
 
-    // Eventos a añadir en la BBDD
-    //const [usuarios, setUsuarios] = useState([]);
-    // const [eventos, setEventos] = useState([]);
-
-    // Examenes
-    // const [examenes, setExamenes] = useState([]);
-    // const [eventosExamenes, setEventosExamenes] = useState([]);
-
-    // Matriculas
-    //const [matriculas, setMatriculas] = useState([]);
-
-    // Sesiones
-    // const [sesiones, setSesiones] = useState([]);
-    // const [sesionesExamenes, setSesionesExamenes] = useState([]);
-
     let sesionesNuevas = [];
     let sesionesExamenesNuevas = [];
 
@@ -57,12 +42,6 @@ function GestionCalendarios() {
     const [mensajeExamenes, setMensajeExamenes] = useState("");
 
     useEffect(() => {
-        // axios
-        //     .get(`http://localhost:5001/usuarios/allUsers/all`)
-        //     .then((response) => {
-        //         console.log("Usuarios: ", response.data);
-        //         setUsuarios(response.data);
-        //     });
         axios.get(`http://localhost:5001/solicitudEventos`).then((response) => {
             console.log("Solicitudes: ", response.data);
             setSolicitudes(response.data);
@@ -75,28 +54,6 @@ function GestionCalendarios() {
             console.log("Grupos: ", response.data);
             setGrupos(response.data);
         });
-        // axios.get(`http://localhost:5001/sesiones/clases`).then((response) => {
-        //     console.log("Sesiones de clase: ", response.data);
-        //     setSesiones(response.data);
-        // });
-        // axios
-        //     .get(`http://localhost:5001/sesiones/examenes`)
-        //     .then((response) => {
-        //         console.log("Sesiones de exámenes: ", response.data);
-        //         setSesionesExamenes(response.data);
-        //     });
-        // axios.get(`http://localhost:5001/eventos/clases`).then((response) => {
-        //     console.log("Eventos: ", response.data);
-        //     setEventos(response.data);
-        // });
-        // axios.get(`http://localhost:5001/eventos/examenes`).then((response) => {
-        //     console.log("Exámenes: ", response.data);
-        //     setEventosExamenes(response.data);
-        // });
-        // axios.get(`http://localhost:5001/matriculas`).then((response) => {
-        //     console.log("Matrículas: ", response.data);
-        //     setMatriculas(response.data);
-        // });
     }, []);
 
     // SOLICITUDES
@@ -245,6 +202,7 @@ function GestionCalendarios() {
                 try {
                     // Determinar el cuatrimestre basado en el nombre del archivo
                     const cuatri = determinarCuatrimestre(nombreArchivo);
+                    console.log("Cuatri", cuatri);
                     const dataHorarios = await ProcesaExcelHorarios_v2(
                         selectedScheduleFile,
                         [
@@ -263,7 +221,7 @@ function GestionCalendarios() {
                         lineasProcesadas.push(info);
                     }
                     await crearSesiones();
-                    await AgregarSesiones(sesionesNuevas);
+                    await AgregarSesiones(sesionesNuevas, cuatri);
                     setMostrarMensajeTemporalHorarios(false);
                 } catch (error) {
                     console.error(
@@ -413,19 +371,26 @@ function GestionCalendarios() {
         );
     };
 
-    const AgregarSesiones = async (sesiones) => {
+    const AgregarSesiones = async (sesiones, cuatri) => {
         console.log("Sesiones antes de su agregación: ", sesiones);
         console.log("Nuevas sesiones antes de su agregación: ", sesionesNuevas);
+        console.log("Cuatri:", cuatri);
         try {
             const tamañoLote = 100; // Tamaño del lote
             let nSesionesNuevas = 0;
+            let primerLote = true;
             // Dividir las sesiones en lotes
             for (let i = 0; i < sesionesNuevas.length; i += tamañoLote) {
                 const lote = sesionesNuevas.slice(i, i + tamañoLote);
                 const response = await axios.post(
                     "http://localhost:5001/sesiones/addLoteSesiones",
-                    lote
+                    {
+                        cuatri: cuatri,
+                        nuevasSesiones: lote,
+                        primerLote: primerLote,
+                    }
                 );
+
                 console.log(
                     `Lote ${
                         i / tamañoLote + 1
@@ -434,6 +399,8 @@ function GestionCalendarios() {
                 );
                 nSesionesNuevas =
                     response.data.sesionesCreadas.length + nSesionesNuevas;
+
+                primerLote = false;
             }
 
             if (nSesionesNuevas > 0) {
@@ -461,6 +428,7 @@ function GestionCalendarios() {
             const hayGrupos = await verificarGrupos();
             if (hayGrupos) {
                 if (selectedExamFile) {
+                    const cuatri = "Examenes";
                     setMostrarMensajeTemporalExamenes(true);
                     const dataExamenes = await ProcesaExcelExamenes(
                         selectedExamFile,
@@ -471,7 +439,10 @@ function GestionCalendarios() {
                         lineasProcesadasExamenes.push(info);
                     }
                     await crearSesionesExamenes();
-                    await AgregarSesionesExamenes(sesionesExamenesNuevas);
+                    await AgregarSesionesExamenes(
+                        sesionesExamenesNuevas,
+                        cuatri
+                    );
                     setMostrarMensajeTemporalExamenes(false);
                 } else {
                     alert(
@@ -558,7 +529,7 @@ function GestionCalendarios() {
         }
     };
 
-    const AgregarSesionesExamenes = async (sesionesExamenes) => {
+    const AgregarSesionesExamenes = async (sesionesExamenes, cuatri) => {
         console.log(
             "Sesiones de exámenes antes de su agregación: ",
             sesionesExamenes
@@ -579,7 +550,10 @@ function GestionCalendarios() {
                 const lote = sesionesExamenesNuevas.slice(i, i + tamañoLote);
                 const response = await axios.post(
                     "http://localhost:5001/sesiones/addLoteSesiones",
-                    lote
+                    {
+                        cuatri: cuatri,
+                        nuevasSesiones: lote,
+                    }
                 );
                 console.log(
                     `Lote ${
@@ -772,7 +746,7 @@ function GestionCalendarios() {
                                     Para cargar el horario de clases debemos
                                     seleccionar el Excel
                                     "Horarios-2023-2024_1C.xlsx" y
-                                    "Horarios-2023-2024_2C".
+                                    "Horarios-2023-2024_2C.xlsx".
                                 </p>
                                 <div className="GenerarExamenes">
                                     Cargar calendario de exámenes

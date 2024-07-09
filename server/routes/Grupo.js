@@ -88,7 +88,7 @@ router.get("/usuario/:id/grupos", async (req, res) => {
         const usuarioId = req.params.id;
         // Realizar consulta a la base de datos para obtener las matriculas del usuario
         const matriculas = await Matriculas.findAll({
-            where: { UsuarioId: usuarioId },
+            where: { UsuarioId: usuarioId, ver: true },
         });
 
         // Obtener los IDs de los grupos asociados a las matriculas encontradas

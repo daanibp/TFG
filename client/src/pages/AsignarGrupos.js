@@ -12,7 +12,7 @@ function AsignarGrupos() {
     const [asignaturas, setAsignaturas] = useState([]);
     const [grupos, setGrupos] = useState([]);
     const [usuarios, setUsuarios] = useState([]);
-    const [matriculas, setMatriculas] = useState([]);
+    //const [matriculas, setMatriculas] = useState([]);
 
     const [selectedGruposFile, setSelectedGruposFile] = useState(null);
     const [selectedAsignaturasFile, setSelectedAsignaturasFile] =
@@ -51,19 +51,20 @@ function AsignarGrupos() {
             setGrupos(response.data);
             setGruposNuevos([]);
         });
-        axios
-            .get(`http://localhost:5001/matriculas/matriculasConGrupo`)
-            .then((response) => {
-                console.log("Matriculas: ", response.data);
-                setMatriculas(response.data);
-                setUsuariosNuevos([]);
-            });
+        // axios
+        //     .get(`http://localhost:5001/matriculas/matriculasConGrupo`)
+        //     .then((response) => {
+        //         console.log("Matriculas: ", response.data);
+        //         setMatriculas(response.data);
+
+        //     });
         axios
             .get(`http://localhost:5001/usuarios/allUsers/all`)
             .then((response) => {
                 console.log("Usuarios: ", response.data);
                 setUsuarios(response.data);
                 setMatriculasNuevas([]);
+                setUsuariosNuevos([]);
             });
     }, []);
 
@@ -457,6 +458,7 @@ function AsignarGrupos() {
                 // Creamos la matrícula
                 const matricula = {
                     estado: "Pendiente",
+                    ver: true,
                     UsuarioId: idUsuario,
                     AsignaturaId: idAsignatura,
                     GrupoId: idGrupoTeo,
@@ -476,6 +478,7 @@ function AsignarGrupos() {
                 // Creamos la matrícula
                 const matricula = {
                     estado: "Pendiente",
+                    ver: true,
                     UsuarioId: idUsuario,
                     AsignaturaId: idAsignatura,
                     GrupoId: idGrupoPA,
@@ -495,6 +498,7 @@ function AsignarGrupos() {
                 // Creamos la matrícula
                 const matricula = {
                     estado: "Pendiente",
+                    ver: true,
                     UsuarioId: idUsuario,
                     AsignaturaId: idAsignatura,
                     GrupoId: idGrupoPL,
@@ -514,6 +518,7 @@ function AsignarGrupos() {
                 // Creamos la matrícula
                 const matricula = {
                     estado: "Pendiente",
+                    ver: true,
                     UsuarioId: idUsuario,
                     AsignaturaId: idAsignatura,
                     GrupoId: idGrupoTG,
@@ -522,22 +527,21 @@ function AsignarGrupos() {
                 addMatriculaIfNotExists(matricula);
             }
         }
-        // setMatriculasNuevas(nuevasMatriculasTemp);
 
         await AgregarMatriculas(matriculasNuevas);
     };
 
     const AgregarMatriculas = async (Matriculas) => {
-        console.log("Matrículas antes de su agregación: ", matriculas);
+        //console.log("Matrículas antes de su agregación: ", matriculas);
         console.log(
             "Nuevas matrículas antes de su agregación: ",
             matriculasNuevas
         );
         try {
             let matriculasC = 0;
+            let matriculasChange = [];
             // Dividir las matrículas en lotes
             const tamañoLote = 100;
-            const respuestas = []; // Array para almacenar todas las respuestas
             for (let i = 0; i < Matriculas.length; i += tamañoLote) {
                 const lote = Matriculas.slice(i, i + tamañoLote);
                 const response = await axios.post(
@@ -552,9 +556,45 @@ function AsignarGrupos() {
                 );
                 matriculasC =
                     matriculasC + response.data.numeroMatriculasCreadas;
-                respuestas.push(response.data);
-                setMatriculas((prevMatriculas) => [...prevMatriculas, ...lote]);
             }
+
+            // Obtener las matrículas de los alumnos
+            const responseMatriculasAlumnos = await axios.get(
+                "http://localhost:5001/matriculas/matriculasAlumnos"
+            );
+            const matriculasAlumnos =
+                responseMatriculasAlumnos.data.matriculasAlumnos;
+
+            // Filtrar las matrículas de alumnos que no estén en matriculasNuevas
+            matriculasChange = matriculasAlumnos.filter((matriculaAlumno) => {
+                const encontrado = Matriculas.find(
+                    (matriculaNueva) =>
+                        matriculaNueva.UsuarioId ===
+                            matriculaAlumno.UsuarioId &&
+                        matriculaNueva.AsignaturaId ===
+                            matriculaAlumno.AsignaturaId &&
+                        matriculaNueva.GrupoId === matriculaAlumno.GrupoId
+                );
+                return !encontrado;
+            });
+
+            console.log("Matrículas Change: ", matriculasChange);
+
+            // Actualizar ver
+            for (let i = 0; i < matriculasChange.length; i += tamañoLote) {
+                const lote = matriculasChange.slice(i, i + tamañoLote);
+                const response1 = await axios.post(
+                    "http://localhost:5001/matriculas/updateMatriculasVer",
+                    lote
+                );
+                console.log(
+                    `Lote ${
+                        i / tamañoLote + 1
+                    } de matrículas a cambiar enviado correctamente:`,
+                    response1.data
+                );
+            }
+
             if (matriculasC === 0) {
                 setMensajeMatriculas(
                     "No se ha agregado ninguna matrícula nueva."
@@ -564,6 +604,7 @@ function AsignarGrupos() {
                     "Se han agregado " + matriculasC + " matrículas nuevas."
                 );
             }
+            setMatriculasNuevas([]);
             setMostrarMensajeTemporalGrupos(false);
             setMostrarMensajeGrupos(true);
         } catch (error) {
@@ -574,28 +615,10 @@ function AsignarGrupos() {
         }
     };
 
-    // Función auxiliar para añadir matrícula si no existe
     const addMatriculaIfNotExists = (matricula) => {
         if (!isEmptyObject(matricula)) {
-            const existsInMatriculas = matriculas.some(
-                (existingMatricula) =>
-                    existingMatricula.UsuarioId === matricula.UsuarioId &&
-                    existingMatricula.AsignaturaId === matricula.AsignaturaId &&
-                    existingMatricula.GrupoId === matricula.GrupoId
-            );
-            const existsInMatriculasNuevas = matriculasNuevas.some(
-                (existingMatricula) =>
-                    existingMatricula.UsuarioId === matricula.UsuarioId &&
-                    existingMatricula.AsignaturaId === matricula.AsignaturaId &&
-                    existingMatricula.GrupoId === matricula.GrupoId
-            );
-
-            if (!existsInMatriculas && !existsInMatriculasNuevas) {
-                matriculasNuevas.push(matricula);
-                console.log("Matricula añadida:", matricula);
-            } else {
-                console.log("La matricula ya existe:", matricula);
-            }
+            matriculasNuevas.push(matricula);
+            console.log("Matricula añadida:", matricula);
         }
     };
 

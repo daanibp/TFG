@@ -47,8 +47,14 @@
     width: 85%;
 }
 
+.FiltroGrupos select{
+    margin-top: 1%;
+}
+
 .ContainerEventos {
     width: 100%;
+    border: 1px solid white;
+    padding: 10px;
 }
 
 .ContainerEventos h2 {
@@ -84,6 +90,27 @@
 
 .containerEliminarEvento button:hover {
     background-color: #910202;
+}
+
+.btnBorrarTodos button{
+    width: 40%;
+    font-size: 16px;
+    font-weight: bold;
+}
+
+.btnRecuperarEventosEliminados h2{
+    margin-top: 5%;
+    margin-bottom: 2%;
+}
+
+.btnRecuperarEventosEliminados button{
+    width: 40%;
+    font-size: 16px;
+    font-weight: bold;
+}
+
+.btnRecuperarEventosEliminados{
+    margin-top: 3%;
 }
 
 

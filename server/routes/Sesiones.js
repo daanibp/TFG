@@ -3,6 +3,7 @@ const router = express.Router();
 const { Sesiones } = require("../models");
 const { validateToken } = require("../middlewares/AuthMiddleware");
 const moment = require("moment");
+const { Op, Sequelize } = require("sequelize");
 
 router.get("/clases", async (req, res) => {
     const sesiones = await Sesiones.findAll({ where: { examen: false } });
@@ -16,10 +17,58 @@ router.get("/examenes", async (req, res) => {
 
 router.post("/addLoteSesiones", async (req, res) => {
     try {
-        const nuevasSesiones = req.body; // Array de sesiones nuevas
+        const { cuatri, nuevasSesiones, primerLote } = req.body;
 
         const sesionesCreadas = [];
         const sesionesDuplicadas = [];
+        if (primerLote) {
+            if (cuatri === "C1") {
+                // Borrar sesiones donde examen: false y fechaDeComienzo entre 01/08 y 31/12 de cualquier año
+                await Sesiones.destroy({
+                    where: {
+                        examen: false,
+                        [Op.and]: [
+                            Sequelize.where(
+                                Sequelize.fn(
+                                    "DATE_FORMAT",
+                                    Sequelize.col("fechaDeComienzo"),
+                                    "%m-%d"
+                                ),
+                                {
+                                    [Op.between]: ["08-01", "12-31"],
+                                }
+                            ),
+                        ],
+                    },
+                });
+            } else if (cuatri === "C2") {
+                // Borrar sesiones donde examen: false y fechaDeComienzo entre 01/01 y 01/07 de cualquier año
+                await Sesiones.destroy({
+                    where: {
+                        examen: false,
+                        [Op.and]: [
+                            Sequelize.where(
+                                Sequelize.fn(
+                                    "DATE_FORMAT",
+                                    Sequelize.col("fechaDeComienzo"),
+                                    "%m-%d"
+                                ),
+                                {
+                                    [Op.between]: ["01-01", "07-01"],
+                                }
+                            ),
+                        ],
+                    },
+                });
+            } else if (cuatri === "Examenes") {
+                // Borrar todas las sesiones con examen: true
+                await Sesiones.destroy({
+                    where: {
+                        examen: true,
+                    },
+                });
+            }
+        }
 
         // Obtener las sesiones existentes en la base de datos que coincidan con las nuevas sesiones
         const sesionesEnBD = await Sesiones.findAll({});

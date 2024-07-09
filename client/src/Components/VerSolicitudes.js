@@ -255,7 +255,12 @@ function VerSolicitudes({
                                 return (
                                     <tr key={eventoCompartido.id}>
                                         <td>
-                                            {evento?.description}
+                                            {evento?.description?.length > 20
+                                                ? `${evento.description.substring(
+                                                      0,
+                                                      20
+                                                  )}...`
+                                                : evento?.description}
                                             <button
                                                 className="botonDetalles"
                                                 onClick={() =>

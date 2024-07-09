@@ -176,6 +176,8 @@ function AñadirEvento({ id, onAgregarEvento, tipo, isGlobal }) {
                     examen: examenValue,
                     global: data.Global,
                     creadoPorMi: true,
+                    eliminado: false,
+                    eliminadoPorUsuario: false,
                     UsuarioId: id,
                 }
             );

@@ -38,7 +38,12 @@ router.get("/examenes", async (req, res) => {
 router.get("/:usuarioId", async (req, res) => {
     const usuarioId = req.params.usuarioId;
     const eventos = await Eventos.findAll({
-        where: { UsuarioId: usuarioId, examen: false },
+        where: {
+            UsuarioId: usuarioId,
+            examen: false,
+            eliminado: false,
+            eliminadoPorUsuario: false,
+        },
     });
     res.json(eventos);
 });
@@ -46,7 +51,12 @@ router.get("/:usuarioId", async (req, res) => {
 router.get("/ex/:usuarioId", async (req, res) => {
     const usuarioId = req.params.usuarioId;
     const eventos = await Eventos.findAll({
-        where: { UsuarioId: usuarioId, examen: true },
+        where: {
+            UsuarioId: usuarioId,
+            examen: true,
+            eliminado: false,
+            eliminadoPorUsuario: false,
+        },
     });
     res.json(eventos);
 });
@@ -77,6 +87,8 @@ router.post("/addEvent", async (req, res) => {
         showTimeAs,
         examen,
         creadoPorMi,
+        eliminado,
+        eliminadoPorUsuario,
         UsuarioId,
     } = req.body;
 
@@ -105,6 +117,8 @@ router.post("/addEvent", async (req, res) => {
         showTimeAs,
         examen,
         creadoPorMi,
+        eliminado,
+        eliminadoPorUsuario,
         UsuarioId,
     });
     res.json(nuevoEvento);
@@ -121,12 +135,56 @@ router.delete("/delete/:eventoId", async (req, res) => {
             return res.status(404).json({ message: "Evento no encontrado" });
         }
 
-        // Elimina el evento
-        await eventoAEliminar.destroy();
+        eventoAEliminar.eliminadoPorUsuario = true;
 
-        res.json({ message: "Evento eliminado exitosamente" });
+        // Guarda los cambios en la base de datos
+        await eventoAEliminar.save();
+
+        res.json({ message: "Evento marcado como eliminado exitosamente" });
     } catch (error) {
-        console.error("Error al eliminar el evento:", error.message);
+        console.error(
+            "Error al marcar el evento como eliminado:",
+            error.message
+        );
+        res.status(500).json({ message: "Error interno del servidor" });
+    }
+});
+
+router.delete("/deleteMultipleByUser", async (req, res) => {
+    const { ids } = req.body;
+
+    try {
+        // Verificar si hay eventos para los IDs especificados
+        const eventosAEliminar = await Eventos.findAll({
+            where: {
+                id: ids,
+            },
+        });
+
+        if (eventosAEliminar.length === 0) {
+            return res.status(404).json({
+                message: "No se encontraron eventos para los IDs especificados",
+            });
+        }
+
+        // Marcar todos los eventos como eliminados
+        await Eventos.update(
+            {
+                eliminadoPorUsuario: true,
+            },
+            {
+                where: {
+                    id: ids,
+                },
+            }
+        );
+
+        res.json({ message: "Eventos marcados como eliminados exitosamente" });
+    } catch (error) {
+        console.error(
+            "Error al marcar los eventos como eliminados:",
+            error.message
+        );
         res.status(500).json({ message: "Error interno del servidor" });
     }
 });
@@ -185,6 +243,7 @@ router.post("/addLoteEventos", async (req, res) => {
                             nuevoEvento.showTimeAs.toString() &&
                         evento.examen === nuevoEvento.examen &&
                         evento.creadoPorMi === nuevoEvento.creadoPorMi &&
+                        //evento.eliminado === nuevoEvento.eliminado &&
                         evento.UsuarioId === nuevoEvento.UsuarioId
                     );
                 });
@@ -204,6 +263,10 @@ router.post("/addLoteEventos", async (req, res) => {
                             error: validationError.message,
                             evento: nuevoEvento,
                         });
+                    }
+                } else {
+                    if (eventoExistente.eliminado === true) {
+                        await eventoExistente.update({ eliminado: false });
                     }
                 }
             }
@@ -230,6 +293,34 @@ router.post("/addLoteEventos", async (req, res) => {
     }
 });
 
+// router.delete("/deleteByUsuario/:usuarioId", async (req, res) => {
+//     const usuarioId = req.params.usuarioId;
+
+//     try {
+//         // Verificar si hay eventos para el usuario especificado
+//         const eventosAEliminar = await Eventos.findAll({
+//             where: { UsuarioId: usuarioId },
+//         });
+
+//         if (eventosAEliminar.length === 0) {
+//             return res.status(404).json({
+//                 message:
+//                     "No se encontraron eventos para el usuario especificado",
+//             });
+//         }
+
+//         // Eliminar los eventos
+//         await Eventos.destroy({
+//             where: { UsuarioId: usuarioId },
+//         });
+
+//         res.json({ message: "Eventos eliminados exitosamente" });
+//     } catch (error) {
+//         console.error("Error al eliminar los eventos:", error.message);
+//         res.status(500).json({ message: "Error interno del servidor" });
+//     }
+// });
+
 router.delete("/deleteByUsuario/:usuarioId", async (req, res) => {
     const usuarioId = req.params.usuarioId;
 
@@ -246,14 +337,18 @@ router.delete("/deleteByUsuario/:usuarioId", async (req, res) => {
             });
         }
 
-        // Eliminar los eventos
-        await Eventos.destroy({
-            where: { UsuarioId: usuarioId },
-        });
+        // Cambiar el campo eliminado y eliminadoPorUsuario a true para los eventos encontrados
+        await Eventos.update(
+            { eliminado: true, eliminadoPorUsuario: true },
+            { where: { UsuarioId: usuarioId } }
+        );
 
-        res.json({ message: "Eventos eliminados exitosamente" });
+        res.json({ message: "Eventos marcados como eliminados exitosamente" });
     } catch (error) {
-        console.error("Error al eliminar los eventos:", error.message);
+        console.error(
+            "Error al marcar los eventos como eliminados:",
+            error.message
+        );
         res.status(500).json({ message: "Error interno del servidor" });
     }
 });
@@ -284,6 +379,52 @@ router.get("/eventosRelacionados/:idUsuario", async (req, res) => {
     } catch (error) {
         console.error("Error al buscar eventos relacionados:", error);
         res.status(500).json({ error: "Error interno del servidor" });
+    }
+});
+
+// Ruta para obtener eventos eliminados por usuario
+router.get("/eliminadosPorUsuario/:idUsuario", async (req, res) => {
+    const { idUsuario } = req.params;
+
+    try {
+        // Buscar eventos eliminados por el usuario especificado
+        const eventosEliminados = await Eventos.findAll({
+            where: {
+                UsuarioId: idUsuario,
+                eliminadoPorUsuario: true,
+                eliminado: false,
+            },
+        });
+
+        res.json({ eventos: eventosEliminados });
+    } catch (error) {
+        console.error("Error al obtener eventos eliminados:", error);
+        res.status(500).json({ message: "Error interno del servidor" });
+    }
+});
+
+// Ruta para marcar un evento como no eliminado por el usuario
+router.put("/recuperar/:eventoId", async (req, res) => {
+    const eventoId = req.params.eventoId;
+
+    try {
+        // Busca el evento por su ID en la base de datos
+        const eventoRecuperado = await Eventos.findByPk(eventoId);
+
+        if (!eventoRecuperado) {
+            return res.status(404).json({ message: "Evento no encontrado" });
+        }
+
+        // Cambia el campo eliminadoPorUsuario a false
+        eventoRecuperado.eliminadoPorUsuario = false;
+
+        // Guarda los cambios en la base de datos
+        await eventoRecuperado.save();
+
+        res.json({ message: "Evento recuperado exitosamente" });
+    } catch (error) {
+        console.error("Error al recuperar el evento:", error.message);
+        res.status(500).json({ message: "Error interno del servidor" });
     }
 });
 

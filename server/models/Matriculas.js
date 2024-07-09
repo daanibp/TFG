@@ -9,6 +9,10 @@ module.exports = (sequelize, DataTypes) => {
             type: DataTypes.STRING,
             allowNull: false,
         },
+        ver: {
+            type: DataTypes.BOOLEAN,
+            allowNull: false,
+        },
         UsuarioId: {
             type: DataTypes.INTEGER,
             allowNull: false,

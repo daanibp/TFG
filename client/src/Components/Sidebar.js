@@ -11,8 +11,10 @@ function Sidebar({ id, isAdmin }) {
         setActiveItem((prevItem) => (prevItem === index ? null : index));
     };
 
-    const filteredSidebarData = SidebarData({ id }).filter(
-        (item) => isAdmin || item.visible === "true"
+    const filteredSidebarData = SidebarData({ id }).filter((item) =>
+        isAdmin
+            ? item.isAdminSection === "true"
+            : item.isAdminSection === "false"
     );
 
     return (

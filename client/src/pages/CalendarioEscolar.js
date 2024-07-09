@@ -439,7 +439,11 @@ function CalendarioEscolar() {
         URL.revokeObjectURL(url);
 
         // Abre una nueva pestaña de Google Calendar
-        window.open("https://calendar.google.com/", "_blank");
+        //window.open("https://calendar.google.com/", "_blank");
+        window.open(
+            "https://calendar.google.com/calendar/u/0/r/settings/export",
+            "_blank"
+        );
     };
 
     // Función para agregar un evento al estado
@@ -474,6 +478,22 @@ function CalendarioEscolar() {
                 prevEventosExamenes.filter((evento) => evento.id !== eventoId)
             );
         }
+    };
+
+    // Función para recuperar un evento del estado
+    const recuperarEvento = async (eventoId, tipo) => {
+        await axios
+            .get(`http://localhost:5001/eventos/${id}`)
+            .then((response) => {
+                console.log("Clases: ", response.data);
+                setEventos(response.data);
+            });
+        await axios
+            .get(`http://localhost:5001/eventos/ex/${id}`)
+            .then((response) => {
+                console.log("Examenes: ", response.data);
+                setEventosExamenes(response.data);
+            });
     };
 
     // Función que se ejecutará al cerrar MatricularProfesor
@@ -636,7 +656,10 @@ function CalendarioEscolar() {
                                 <EliminarEvento
                                     tipo={mostrarTipoEventos}
                                     eventosFormateados={eventosFormateados}
+                                    gruposSeleccionados={gruposSeleccionados}
                                     onEliminarEvento={eliminarEvento}
+                                    onRecuperarEvento={recuperarEvento}
+                                    idUsuario={id}
                                 />
                             )}
                             <div className="EspacioGoogleApple">

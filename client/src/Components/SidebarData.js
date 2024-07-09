@@ -30,7 +30,7 @@ export const SidebarData = ({ id }) => [
             //     link: "/matriculas/realizarmatricula",
             // },
         ],
-        visible: "true",
+        isAdminSection: "false",
     },
     {
         title: "Administración",
@@ -59,6 +59,6 @@ export const SidebarData = ({ id }) => [
                 link: "/admin/asignargrupos",
             },
         ],
-        visible: "false",
+        isAdminSection: "true",
     },
 ];
